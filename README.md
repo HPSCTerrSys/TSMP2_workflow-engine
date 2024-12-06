@@ -6,43 +6,6 @@ TSMP2 workflow engine for running simulations. The following examples and descri
 
 ## Setup the workflow
 
-``` bash
-cd $PROJECT_DIR
-git clone --recurse-submodules https://github.com/HPSCTerrSys/TSMP2_workflow-engine
-wfe_dir=realpath tsmp2_workflow-engine
-```
-
-## Building the model
-
-The TSMP2 ( https://github.com/HPSCTerrSys/TSMP2 ) should be either already compiled (see [ReadMe TSMP2](https://github.com/HPSCTerrSys/TSMP2/blob/master/README.md)) or compiled with the following steps.
-
-0) change directory
-```bash
-cd ${wfe_dir}/src/TSMP2
-```
-
-1) compile the code
-
-```bash
-# TSMP2
-./build_tsmp2.sh --icon --eclm --parflow
-```
-
-## Run experiment
-
-Create and softlink run-directory on SCRATCH
-``` bash
-export SCRATCH_DIR=/p/scratch/YOUR_PROJECT/$USER/$sim_id
-mkdir -pv $SCRATCH_DIR
-ln -s $SCRATCH_DIR/run run
-```
-
-Adapt ressources and time in the setup-script. 
-``` bash
-cd ctl
-vi control_tsmp2.sh
-```
-
 Activate a compute project
 ```bash
 # Replace PROJECTNAME with your compute project
@@ -52,10 +15,48 @@ jutil env activate -p PROJECTNAME
 echo $BUDGET_ACCOUNTS
 ```
 
+In case you are not on a [JSC](https://www.fz-juelich.de/) machine, set the shell variables `BUDGET_ACCOUNT`, `PROJECT` and `SCRATCH` manually.
+Instead of setting `BUDGET_ACCOUNT` you may also replace this variable in `ctl/control_tsmp2.sh`.
+
+``` bash
+cd $PROJECT/$USER
+git clone https://github.com/HPSCTerrSys/TSMP2_workflow-engine
+wfe_dir=$(realpath TSMP2_workflow-engine)
+cd ${wfe_dir}
+git submodule update --init
+```
+
+## Building the model
+
+The TSMP2 ( https://github.com/HPSCTerrSys/TSMP2 ) should be either already compiled (see [ReadMe TSMP2](https://github.com/HPSCTerrSys/TSMP2/blob/master/README.md)) or compiled with the following steps.
+
+```bash
+cd ${wfe_dir}/src/TSMP2
+./build_tsmp2.sh --icon --eclm --parflow
+```
+
+Adjust the components to your purpose.
+
+## Run experiment
+
+If you want to store your run directory files elsewhere than here, make `${wfe_dir}/run` into a symlink pointing to your new directory.
+``` bash
+export scratch_dir=$SCRATCH/$USER/$sim_id
+mkdir -pv $scratch_dir/run
+git rm run/.gitkeep
+ln -sf $scratch_dir/run run
+```
+
+Adapt resources and time in the setup-script.
+``` bash
+cd ctl
+vi control_tsmp2.sh
+```
+
 Start simulation
 ``` bash
 sh control_tsmp2.sh
 ```
 
 ## Contact
-Stefan Poll (s.poll@fz-juelich.de)
+Stefan Poll <mailto:s.poll@fz-juelich.de>

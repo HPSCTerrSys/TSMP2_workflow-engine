@@ -9,9 +9,8 @@ echo "###"
 simout_dir=${out_dir}/${caseid}${modelid}_${dateymd}
 simrst_dir=${rst_dir}/${caseid}${modelid}
 
-# move directory if exists
-if [ -d "${simout_dir}" ]; then
-#if [ $(ls -A "${simout_dir}" | wc -l) -ne 0]; then
+# create a new simulation output directory
+if [ -e "${simout_dir}" ]; then
   mv ${simout_dir} ${simout_dir}_bku$(date '+%Y%m%d%H%M%S')
 fi
 mkdir -p "${simout_dir}"

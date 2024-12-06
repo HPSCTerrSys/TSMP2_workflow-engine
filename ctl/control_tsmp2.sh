@@ -92,10 +92,10 @@ echo "geo_dir: "${geo_dir}
 # select machine defaults, if not set by user
 if ( [ -z $npnode_u ] | [ -z $partition_u ] ); then
 echo "Take system default for npnode and partition. "
-if [ ${SYSTEMNAME^^} == "JUWELS" ];then
+if [ "${SYSTEMNAME}" == "juwels" ]; then
 npnode=48
 partition=batch
-elif [ ${SYSTEMNAME^^} == "JURECADC" ] || [ ${SYSTEMNAME^^} == "JUSUF" ];then
+elif [ "${SYSTEMNAME}" == "jurecadc" ] || [ "${SYSTEMNAME}" == "jusuf" ]; then
 npnode=128
 partition=dc-cpu
 else
@@ -138,9 +138,9 @@ source ${ctl_dir}/utils_tsmp2.sh
 
 # generic sbatch string
 jobgenstring="--export=ALL \
-	      --account=${account} \
+              --account=${account} \
               --partition=${partition} \
-	      --mail-type=${mailtype} \
+              --mail-type=${mailtype} \
               --mail-user=${mailaddress}"
 
 ###
@@ -218,12 +218,12 @@ fi # lpre
 #
 jobsimstring="${jobgenstring} \
               --job-name="${expid}_${caseid}sim_${dateshort}" \
-	      --dependency=${dependencystring} \
-	      --time=${sim_wallclock} \
+              --dependency=${dependencystring} \
+              --time=${sim_wallclock} \
               --output="${log_dir}/%x_%j.out" \
               --error="${log_dir}/%x_%j.err" \
-	      --nodes=${tot_node} \
-	      --ntasks=${tot_proc}"
+              --nodes=${tot_node} \
+              --ntasks=${tot_proc}"
 
 if (! ${debugmode}) ; then
   # Submit to sim.job
