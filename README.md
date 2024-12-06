@@ -39,23 +39,24 @@ Adjust the components to your purpose.
 
 ## Run experiment
 
-If you want to store your run directory files elsewhere than here, make `${wfe_dir}/run` into a symlink pointing to your new directory.
+If you want to store your run directory files elsewhere than here, set a simulation ID (replace `MY-SIMULATION`) and make `${wfe_dir}/run` into a symlink pointing to your new directory.
 ``` bash
+export sim_id=MY-SIMULATION
 export scratch_dir=$SCRATCH/$USER/$sim_id
-mkdir -pv $scratch_dir/run
+mkdir -p $scratch_dir/run
 git rm run/.gitkeep
-ln -sf $scratch_dir/run run
+ln -snf $scratch_dir/run run
 ```
 
 Adapt resources and time in the setup-script.
 ``` bash
-cd ctl
+cd ${wfe_dir}/ctl
 vi control_tsmp2.sh
 ```
 
 Start simulation
 ``` bash
-sh control_tsmp2.sh
+./control_tsmp2.sh
 ```
 
 ## Contact
