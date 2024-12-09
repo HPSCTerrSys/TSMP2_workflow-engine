@@ -82,8 +82,8 @@ ctl_dir=$(dirname $(realpath ${BASH_SOURCE:-$0}))
 nml_dir=$(realpath ${ctl_dir}/../nml/)
 geo_dir=$(realpath ${ctl_dir}/../dta/geo/)
 frc_dir=$(realpath ${ctl_dir}/../dta/forcing/)
-out_dir=$(realpath ${ctl_dir}/../dta/simres/)
-rst_dir=$(realpath ${ctl_dir}/../dta/restart/)
+out_dir=$(realpath ${ctl_dir}/../dta/)simres/
+rst_dir=$(realpath ${ctl_dir}/../dta/)restart/
 log_dir=$(realpath ${ctl_dir}/logs/)
 echo "ctl_dir: "${ctl_dir}
 echo "nml_dir: "${nml_dir}
