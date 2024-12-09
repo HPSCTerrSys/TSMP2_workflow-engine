@@ -91,7 +91,7 @@ echo "geo_dir: "${geo_dir}
 
 # select machine defaults, if not set by user
 if ( [ -z $npnode] | [ -z $partition ] ); then
-echo "Take system default for npnode and partition. "
+echo "Taking system default for npnode and partition..."
 if [ "${SYSTEMNAME}" == "juwels" ]; then
 npnode=48
 partition=batch
@@ -102,7 +102,7 @@ else
 echo "Machine '$SYSTEMNAME' is not recognized. Valid input juwels/jurecadc/jusuf."
 fi
 else
-echo "Take user setting for nonode $npnode and partition $partition."
+echo "Taking user setting for nonode $npnode and partition $partition..."
 fi
 
 if [ -z $account ]; then
@@ -112,15 +112,15 @@ fi
 
 if [ -z "$tsmp2_dir" ]; then
 tsmp2_dir=$(realpath  ${ctl_dir}/../src/TSMP2)
-echo "Take TSMP2 default dir at $tsmp2_dir"
+echo "Taking TSMP2 default dir at $tsmp2_dir..."
 fi
 if [ -z "$tsmp2_install_dir" ]; then
 tsmp2_install_dir=${tsmp2_dir}/bin/${SYSTEMNAME^^}_${MODEL_ID}
-echo "Take TSMP2 component binaries from default dir at $tsmp2_install_dir"
+echo "Taking TSMP2 component binaries from default dir at $tsmp2_install_dir..."
 fi
 if [ -z "$tsmp2_env" ]; then
 tsmp2_env=$(find $tsmp2_install_dir -type f -name "jsc.*.sh")
-echo "Use enviromnent file $tsmp2_env"
+echo "Using environment file $tsmp2_env..."
 fi
 
 # Import function
