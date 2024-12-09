@@ -39,9 +39,9 @@ mailaddress=""
 
 # user setting, leave empty for jsc machine defaults
 prevjobid="" # previous job-id, default leave empty
-npnode_u="" # number of cores per node
-partition_u="" # compute partition
-account_u=$BUDGET_ACCOUNTS # SET compute account. If not set, slts is taken
+npnode="" # number of cores per node
+partition="" # compute partition
+account=$BUDGET_ACCOUNTS # SET compute account. If not set, slts is used
 
 # wallclock
 pre_wallclock=00:05:00
@@ -50,9 +50,9 @@ pos_wallclock=00:05:00
 vis_wallclock=00:05:00
 
 # file/directory pathes
-tsmp2_dir_u=$TSMP2_DIR
-tsmp2_install_dir_u="" # leave empty to take default
-tsmp2_env_u="" # leave empty to take default
+tsmp2_dir=$TSMP2_DIR
+tsmp2_install_dir="" # leave empty to use default
+tsmp2_env="" # leave empty to use default
 
 # number of nodes per component (<comp>_node will be set to zero, if not indicated in MODEL_ID)
 ico_node=3
@@ -82,20 +82,20 @@ ctl_dir=$(dirname $(realpath ${BASH_SOURCE:-$0}))
 nml_dir=$(realpath ${ctl_dir}/../nml/)
 geo_dir=$(realpath ${ctl_dir}/../dta/geo/)
 frc_dir=$(realpath ${ctl_dir}/../dta/forcing/)
-out_dir=$(realpath ${ctl_dir}/../dta/simres/)
-rst_dir=$(realpath ${ctl_dir}/../dta/restart/)
+out_dir=$(realpath ${ctl_dir}/../dta/)simres/
+rst_dir=$(realpath ${ctl_dir}/../dta/)restart/
 log_dir=$(realpath ${ctl_dir}/logs/)
 echo "ctl_dir: "${ctl_dir}
 echo "nml_dir: "${nml_dir}
 echo "geo_dir: "${geo_dir}
 
 # select machine defaults, if not set by user
-if ( [ -z $npnode_u ] | [ -z $partition_u ] ); then
+if ( [ -z $npnode] | [ -z $partition ] ); then
 echo "Take system default for npnode and partition. "
-if [ ${SYSTEMNAME^^} == "JUWELS" ];then
+if [ "${SYSTEMNAME}" == "juwels" ]; then
 npnode=48
 partition=batch
-elif [ ${SYSTEMNAME^^} == "JURECADC" ] || [ ${SYSTEMNAME^^} == "JUSUF" ];then
+elif [ "${SYSTEMNAME}" == "jurecadc" ] || [ "${SYSTEMNAME}" == "jusuf" ]; then
 npnode=128
 partition=dc-cpu
 else
@@ -103,34 +103,24 @@ echo "Machine '$SYSTEMNAME' is not recognized. Valid input juwels/jurecadc/jusuf
 fi
 else
 echo "Take user setting for nonode $npnode and partition $partition."
-npnode=$npnode_u
-partition=$partition_u
 fi
 
-if [ -z $account_u ]; then
-echo "WARNING: No account is set. Take slts!"
+if [ -z $account ]; then
+echo "WARNING: No account is set. Using slts!"
 account=slts
-else
-account=$account_u
 fi
 
-if [ -z "$tsmp2_dir_u" ]; then
+if [ -z "$tsmp2_dir" ]; then
 tsmp2_dir=$(realpath  ${ctl_dir}/../src/TSMP2)
 echo "Take TSMP2 default dir at $tsmp2_dir"
-else
-tsmp2_dir=$tsmp2_dir_u
 fi
-if [ -z "$tsmp2_install_dir_u" ]; then
+if [ -z "$tsmp2_install_dir" ]; then
 tsmp2_install_dir=${tsmp2_dir}/bin/${SYSTEMNAME^^}_${MODEL_ID}
 echo "Take TSMP2 component binaries from default dir at $tsmp2_install_dir"
-else
-tsmp2_install_dir=$tsmp2_install_dir_u
 fi
-if [ -z "$tsmp2_env_u" ]; then
+if [ -z "$tsmp2_env" ]; then
 tsmp2_env=$(find $tsmp2_install_dir -type f -name "jsc.*.sh")
 echo "Use enviromnent file $tsmp2_env"
-else
-tsmp2_env=$tsmp2_env_u
 fi
 
 # Import function
@@ -138,9 +128,9 @@ source ${ctl_dir}/utils_tsmp2.sh
 
 # generic sbatch string
 jobgenstring="--export=ALL \
-	      --account=${account} \
+              --account=${account} \
               --partition=${partition} \
-	      --mail-type=${mailtype} \
+              --mail-type=${mailtype} \
               --mail-user=${mailaddress}"
 
 ###
@@ -218,12 +208,12 @@ fi # lpre
 #
 jobsimstring="${jobgenstring} \
               --job-name="${expid}_${caseid}sim_${dateshort}" \
-	      --dependency=${dependencystring} \
-	      --time=${sim_wallclock} \
+              --dependency=${dependencystring} \
+              --time=${sim_wallclock} \
               --output="${log_dir}/%x_%j.out" \
               --error="${log_dir}/%x_%j.err" \
-	      --nodes=${tot_node} \
-	      --ntasks=${tot_proc}"
+              --nodes=${tot_node} \
+              --ntasks=${tot_proc}"
 
 if (! ${debugmode}) ; then
   # Submit to sim.job
