@@ -15,8 +15,8 @@ jutil env activate -p PROJECTNAME
 echo $BUDGET_ACCOUNTS
 ```
 
-In case you are not on a [JSC](https://www.fz-juelich.de/) machine, set the shell variables `BUDGET_ACCOUNT`, `PROJECT` and `SCRATCH` manually.
-Instead of setting `BUDGET_ACCOUNT` you may also replace this variable in `ctl/control_tsmp2.sh`.
+In case you are not on a [JSC](https://www.fz-juelich.de/) machine, set the shell variables `PROJECT`, `SCRATCH` (existing pathnames) and `BUDGET_ACCOUNTS` manually.
+Instead of setting `BUDGET_ACCOUNTS` you may also replace this variable in `ctl/control_tsmp2.sh`.
 
 ``` bash
 cd $PROJECT/$USER
@@ -41,6 +41,7 @@ Adjust the components to your purpose.
 
 If you want to store your run directory files elsewhere than here, set a simulation ID (replace `MY-SIMULATION`) and make `${wfe_dir}/run` into a symlink pointing to your new directory.
 ``` bash
+cd ${wfe_dir}
 export sim_id=MY-SIMULATION
 export scratch_dir=$SCRATCH/$USER/$sim_id
 mkdir -p $scratch_dir/run
