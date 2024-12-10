@@ -16,13 +16,12 @@ echo "###"
 # General
 ####################
 
-# create and clean-up sim_dir
+# create a new simulation run directory
 echo "simdir: "$sim_dir
-if [ -d "${sim_dir}" ]; then
+if [ -e "${sim_dir}" ]; then
   mv ${sim_dir} ${sim_dir}_bku$(date '+%Y%m%d%H%M%S')
-  #rm -f ${sim_dir:?}
-fi # -d sim_dir
-mkdir -pv $sim_dir
+fi
+mkdir -p $sim_dir
 
 # copy blueprints
 cp ${ctl_dir}/conf/slm_multiprog_mapping_sed.conf ${sim_dir}/slm_multiprog_mapping.conf
