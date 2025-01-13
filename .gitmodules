@@ -15,9 +15,9 @@
 	url = https://github.com/HPSCTerrSys/namelist_oasis3-mct_TSMP2-real-template.git
 	branch = master
 [submodule "src/TSMP2"]
-        path = src/TSMP2
-        url = https://github.com/HPSCTerrSys/TSMP2.git
-        branch = dev_frontend
+	path = src/TSMP2
+	url = https://github.com/HPSCTerrSys/TSMP2.git
+	branch = master
 [submodule "dta/geo/icon"]
 	path = dta/geo/icon
 	url = https://icg4geo.icg.kfa-juelich.de/ExternalReposPublic/tsmp2-static-files/extpar_icon_cordex-eur-11u.git
