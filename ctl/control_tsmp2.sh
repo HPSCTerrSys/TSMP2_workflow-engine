@@ -183,7 +183,7 @@ jobprestring="${jobgenstring} \
               --ntasks=${npnode}"
 
 # Submit to pre.job
-submit_pre=$(sbatch ${jobprestring} ${ctl_dir}/pre_ctl/pre.job 2>&1)
+submit_pre=$(sbatch ${jobprestring} ${ctl_dir}/pre_ctl/pre.job ${lpre[@]} 2>&1)
 echo $submit_pre" for preprocessing"
 
 # get jobid
@@ -227,7 +227,7 @@ jobsimstring="${jobgenstring} \
 
 if (! ${debugmode}) ; then
   # Submit to sim.job
-  submit_sim=$(sbatch ${jobsimstring} ${ctl_dir}/sim_ctl/sim.job 2>&1)
+  submit_sim=$(sbatch ${jobsimstring} ${ctl_dir}/sim_ctl/sim.job ${lsim[@]} 2>&1)
   echo $submit_sim" for simulation"
 else
   source ${ctl_dir}/sim_ctl/sim.job
@@ -262,7 +262,7 @@ jobposstring="${jobgenstring} \
               --ntasks=${npnode}"
 
 # Submit to pos.job
-submit_pos=$(sbatch ${jobposstring} ${ctl_dir}/pos_ctl/pos.job 2>&1)
+submit_pos=$(sbatch ${jobposstring} ${ctl_dir}/pos_ctl/pos.job ${lpos[@]} 2>&1)
 echo $submit_pos" for postprocessing"
 
 # get jobid
