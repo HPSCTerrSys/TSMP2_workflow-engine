@@ -41,11 +41,6 @@ jobs:
         run:  |
           make clean doc
 
-      - name: Build TSMP2 WFE Source Code browser
-        working-directory: ./doc
-        run:  |
-          make src-browser
-
       - name: Upload documentation artifacts
         uses: actions/upload-pages-artifact@v3
         with:
