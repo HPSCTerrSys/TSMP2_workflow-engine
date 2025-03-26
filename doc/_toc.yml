@@ -16,7 +16,8 @@ parts:
       title: Usage of TSMP2 WFE
       sections:
       - file: user_guide/usage_wfe/setup
-#      - file: user_guide/usage_wfe/usage
+      - file: user_guide/usage_wfe/build
+      - file: user_guide/usage_wfe/running
 
 #  - caption: Reference
 #    chapters:
