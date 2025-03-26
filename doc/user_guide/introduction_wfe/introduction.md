@@ -1,3 +1,3 @@
-# TSMP2 Workflow Engine
+# Workflow engine overview
 
 to be filled
