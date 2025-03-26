@@ -1,4 +1,4 @@
-## Run experiment
+# Run experiment
 
 If you want to store your run directory files elsewhere than here, set a simulation ID (replace `MY-SIMULATION`) and make `${wfe_dir}/run` into a symlink pointing to your new directory.
 ``` bash
