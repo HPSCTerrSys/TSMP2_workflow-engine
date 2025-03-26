@@ -37,4 +37,4 @@ html:
   use_repository_button: true
 
 ## Do not parse these files
-#exclude_patterns: [FORD_options.md]
+#exclude_patterns: [options.md]
