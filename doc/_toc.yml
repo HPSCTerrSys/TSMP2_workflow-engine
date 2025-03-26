@@ -1,0 +1,25 @@
+# https://hpscterrsys.github.io/TSMP2_workflow-engine
+
+format: jb-book
+root: INDEX
+parts:
+  - caption: TSMP2 WFE user guide
+    chapters:
+
+    - file: user_guide/introduction_wfe/README
+      title: Introduction to TSMP2 WFE
+      sections:
+      - file: user_guide/introduction_wfe/introduction
+      - file: user_guide/introduction_wfe/concept
+
+    - file: user_guide/usage_wfe/README
+      title: Usage of TSMP2 WFE
+      sections:
+      - file: user_guide/usage_wfe/setup
+#      - file: user_guide/usage_wfe/usage
+
+#  - caption: Reference
+#    chapters:
+#    - file: reference/new
+#    - url: https://github.com/HPSCTerrSys/TSMP2/blob/master/README.md
+#      title: TSMP2 build system
