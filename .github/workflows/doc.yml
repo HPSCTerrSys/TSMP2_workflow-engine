@@ -68,3 +68,6 @@ jobs:
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
+      with:
+        path: _build/html
+        name: github-pages_${{ matrix.os }}_python${{ matrix.python-version }}
