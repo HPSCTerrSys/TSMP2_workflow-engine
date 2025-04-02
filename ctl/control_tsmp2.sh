@@ -44,7 +44,7 @@ partition="" # compute partition
 account=$BUDGET_ACCOUNTS # SET compute account. If not set, slts is used
 
 # wallclock
-pre_wallclock=00:05:00
+pre_wallclock=00:35:00
 sim_wallclock=00:25:00 # needs to be format hh:mm:ss
 pos_wallclock=00:05:00
 vis_wallclock=00:05:00
@@ -155,6 +155,8 @@ datep1=$(date -u -d -I "+${startdate} + ${simlength}")
 datem1=$(date -u -d -I "+${startdate} - ${simlength}")
 simlensec=$(( $(date -u -d "${datep1}" +%s)-$(date -u -d "${startdate}" +%s) ))
 simlenhr=$(($simlensec/3600 | bc -l))
+simlenmon=$(( (10#$(date -u -d "${datep1}" +%Y)-10#$(date -u -d "${startdate}" +%Y))*12 + \
+               10#$(date -u -d "${datep1}" +%m)-10#$(date -u -d "${startdate}" +%m) ))
 dateymd=$(date -u -d "${startdate}" +%Y%m%d)
 dateshort=$(date -u -d "${startdate}" +%Y%m%d%H%M%S)
 
