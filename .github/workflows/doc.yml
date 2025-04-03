@@ -17,12 +17,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    permissions:
-      pages: write
-      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -44,6 +38,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: "doc/_build/html"
+          name: tsmp2_wfe_docs
 
   deploy:
     if: github.event_name != 'pull_request'
@@ -63,5 +58,4 @@ jobs:
       id: deployment
       uses: actions/deploy-pages@v4
       with:
-        path: _build/html
-        name: github-pages_${{ matrix.os }}_python${{ matrix.python-version }}
+        artifact_name: tsmp2_wfe_docs
