@@ -64,12 +64,6 @@ jobs:
       id-token: write   # to verify the deployment originates from an appropriate source
 
     steps:
-    - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            .github
-            doc
-
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
