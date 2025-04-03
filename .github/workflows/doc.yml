@@ -2,7 +2,7 @@ name: TSMP2 WFE Docs
 
 on:
   push:
-    branches: [ 'master', 'doc*' ]
+    branches: [ 'master' ]
   pull_request:
     branches: [ 'master' ]
 
