@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - 'doc-**'
 
 env:
   BASE_URL: /${{ github.event.repository.name }}
@@ -52,7 +51,7 @@ jobs:
           path: "doc/_build/html"
 
   deploy:
-#    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
