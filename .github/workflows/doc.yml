@@ -1,10 +1,10 @@
-name: Deploy Docs
+name: TSMP2 WFE Docs
 
 on:
   push:
-    branches: [ master ]
+    branches: [ 'master', 'doc*' ]
   pull_request:
-    branches: [ master ]
+    branches: [ 'master' ]
 
 env:
   BASE_URL: /${{ github.event.repository.name }}
