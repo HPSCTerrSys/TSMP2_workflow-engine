@@ -1,1 +1,8 @@
+# logs
+ctl/logs
+# run directories
 run/
+# data directories
+dta/restart
+dta/simres
+dta/forcing
