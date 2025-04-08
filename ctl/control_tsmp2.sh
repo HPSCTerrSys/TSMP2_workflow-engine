@@ -185,7 +185,18 @@ jobprestring="${jobgenstring} \
               --ntasks=${npnode}"
 
 # Submit to pre.job
-submit_pre=$(sbatch ${jobprestring} ${ctl_dir}/pre_ctl/pre.job 2>&1)
+if (! ${debugmode}) ; then
+  # Submit to sim.job
+  submit_pre=$(sbatch ${jobprestring} ${ctl_dir}/pre_ctl/pre.job 2>&1)
+  echo $submit_pre" for preprocessing"
+else
+  # Set lpre run & cleanup to false and source pre.job
+  lpre[1]=false
+  lpre[2]=false
+  lprestr="${lpre[@]}"
+  source ${ctl_dir}/pre_ctl/pre.job
+fi
+
 echo $submit_pre" for preprocessing"
 
 # get jobid

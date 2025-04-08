@@ -50,5 +50,28 @@ echo "List of forcing files: "${listfrcfile[@]}
 
 fi
 
+
+if ${debugmode}; then
+
+# create job submission script (pre.job)
+echo "#!/usr/bin/env bash" > pre.job
+echo "#SBATCH ${jobprestring//[$'\t\r\n']}" >> pre.job
+
+# add modelid, which is needed
+echo "" >> pre.job
+echo "modelid=${modelid}" >> pre.job
+echo "lsmforcgensrc_dir=${lsmforcgensrc_dir}" >> pre.job
+echo "cdsapi_dtadir=${cdsapi_dtadir}" >> pre.job
+echo "listfrcfile=(${listfrcfile[*]})" >> pre.job
+
+# cat pre run script into submission script
+cat ${ctl_dir}/pre_ctl/pre_run.sh | tail -n +2 >> pre.job # start from line 2
+
+sed -i "s/pre_run(){//" pre.job
+sed -i "s/} # pre_run//" pre.job
+sed -i "s#${log_dir}#${pre_dir}#g" pre.job
+
+fi # debugmode
+
 } # pre_config
 
