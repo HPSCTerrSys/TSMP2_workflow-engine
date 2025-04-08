@@ -34,3 +34,6 @@
 	path = dta/geo/parflow
 	url = https://icg4geo.icg.kfa-juelich.de/ExternalReposPublic/tsmp2-static-files/extpar_parflow_cordex-eur-11u.git
 	branch = master
+[submodule "src/eCLM_atmforcing"]
+	path = src/eCLM_atmforcing
+	url = https://github.com/HPSCTerrSys/eCLM_static-file-generator.git
