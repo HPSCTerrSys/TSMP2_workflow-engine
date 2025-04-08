@@ -18,7 +18,7 @@ IFS=' ' read -r -a lvis <<< "$lvisstr"
 ###
 # source environment
 ###
-source ${tsmp2_env} # should be changed to pre-processing env.
+#source ${tsmp2_env} # chang pre-processing env. according to comp. model
 
 ###
 # Start config, run, cleanup
