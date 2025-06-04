@@ -20,17 +20,17 @@
 	branch = master
 [submodule "dta/geo/icon"]
 	path = dta/geo/icon
-	url = https://icg4geo.icg.kfa-juelich.de/ExternalReposPublic/tsmp2-static-files/extpar_icon_fs-idealnwp.git
+	url = https://icg4geo.icg.kfa-juelich.de/ExternalReposPublic/tsmp2-static-files/extpar_icon_scalhom.git
 	branch = master
 [submodule "dta/geo/oasis"]
 	path = dta/geo/oasis
-	url = https://icg4geo.icg.kfa-juelich.de/ExternalReposPublic/tsmp2-static-files/extpar_oasis3-mct_fs-idealnwp.git
+	url = https://icg4geo.icg.kfa-juelich.de/ExternalReposPublic/tsmp2-static-files/extpar_oasis3-mct_scalhom.git
 	branch = master
 [submodule "dta/geo/eclm"]
 	path = dta/geo/eclm
-	url = https://icg4geo.icg.kfa-juelich.de/ExternalReposPublic/tsmp2-static-files/extpar_eclm_fs-idealnwp.git
+	url = https://icg4geo.icg.kfa-juelich.de/ExternalReposPublic/tsmp2-static-files/extpar_eclm_scalhom.git
 	branch = master
 [submodule "dta/geo/parflow"]
 	path = dta/geo/parflow
-	url = https://icg4geo.icg.kfa-juelich.de/ExternalReposPublic/tsmp2-static-files/extpar_parflow_fs-idealnwp.git
+	url = https://icg4geo.icg.kfa-juelich.de/ExternalReposPublic/tsmp2-static-files/extpar_parflow_scalhom.git
 	branch = master
