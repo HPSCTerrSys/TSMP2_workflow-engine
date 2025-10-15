@@ -283,6 +283,21 @@ simulations.
 
 eCLM land surface component configuration.
 
+For eCLM namelist definitions (derived from CLM5.0 if not declared
+otherwise), see
+https://docs.cesm.ucar.edu/models/cesm2/settings/current/clm5_0_nml.html
+
+##### geo_dir_clm
+
+Directory path for eCLM static geographical input files (domain file,
+surface data, topography, etc.). Default: `${geo_dir}/eclm/static`
+(e.g., `./input_clm`).
+
+##### clm_frc_dir
+
+Directory path for eCLM atmospheric forcing data. Default:
+`${frc_dir}/eclm/forcing/` (e.g., `./forcings`).
+
 ##### domainfile_clm
 
 Domain file for eCLM grid definition. Specifies land/lake mask and
@@ -295,21 +310,37 @@ Surface data file for eCLM containing vegetation, soil properties, and
 land use (e.g.,
 `surfdata_ICON-11_hist_16pfts_Irrig_CMIP6_simyr2000_c230302_gcvurb-pfsoil_halo.nc`).
 
+##### fini_clm
+
+Path to eCLM restart file for continuing simulations. Used when
+`startdate` differs from `inidate`. Default: automatically determined
+from previous simulation restart directory (e.g.,
+`./input_clm/FSpinup_300x300_NRW.clm2.r.2222-01-01-00000.nc`).
+
+##### clm_tsp
+
+eCLM timestep in seconds.
+
+Default: value of `cpltsp_atmsfc` from `master.conf` (e.g., `1800` for
+30-minute timestep).
+
 ##### clmoutvar
 
-Comma-separated list of eCLM output variables. Examples:
+Comma-separated list of eCLM output variables.
 
-- `'TWS'` - Total water storage
-- `'H2OSOI'` - Soil moisture
-- `'TSOI'` - Soil temperature
-- `'TG'` - Ground temperature
-- `'EFLX_LH_TOT'` - Total latent heat flux
-- `'FSH'` - Sensible heat flux
-- `'FSA'` - Absorbed shortwave radiation
-- `'FSR'` - Reflected shortwave radiation
-- `'FIRA'` - Net longwave radiation
-- `'Rnet'` - Net radiation
-- `'EFLX_SOIL_GRND'` - Ground heat flux
+Sets `hist_fincl1` in eCLM's `lnd_in` namelist.
+
+##### clmoutfrq
+
+eCLM history output frequency in hours (negative values).
+
+Sets `hist_nhtfrq` in eCLM's `lnd_in` namelist.
+
+##### clmoutmfilt
+
+Maximum number of time samples per eCLM history file.
+
+Sets `hist_mfilt` in eCLM's `lnd_in` namelist.
 
 #### [sim_config_parflow]
 
