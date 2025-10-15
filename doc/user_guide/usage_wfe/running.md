@@ -225,4 +225,148 @@ Useful for running single tasks, e.g. namelist creation.
 #### joblog
 
 If set to `true`, job status will be logged. Default: `true`.
-	
+
+## expid.conf
+
+The `expid.conf` file contains component-specific configuration
+settings for the workflow engine. It is located in `ctl/expid.conf` by
+default, or at the path specified by `conf_file` in `master.conf`.
+
+The file is organized into sections for each workflow stage
+(preprocessing, simulation, post-processing, visualization) and
+further subdivided by component.
+
+### Preprocessing Configuration
+
+#### [pre_config_clm]
+
+Configuration settings for eCLM preprocessing stage. Currently empty
+in the default configuration.
+
+### Simulation Configuration
+
+#### [sim_config_general]
+
+General simulation configuration settings applicable across all
+components. Currently empty in the default configuration.
+
+#### [sim_config_icon]
+
+ICON atmosphere component configuration.
+
+##### icon_numioprocs
+
+Number of I/O processors for ICON. Controls how many processes handle
+file output operations (e.g., `3`).
+
+##### fname_dwdFG
+
+Filename for DWD first guess data used by ICON (e.g.,
+`dwdFG_R13B05_DOM01.nc`).
+
+##### fname_icondomain
+
+Filename for ICON domain grid file (e.g., `europe011_DOM01.nc`).
+
+##### fname_iconextpar
+
+Filename for ICON external parameters including tiles (e.g.,
+`external_parameter_icon_europe011_DOM01_tiles.nc`).
+
+##### fname_iconghgforc
+
+Filename for greenhouse gas forcing data (e.g.,
+`bc_greenhouse_rcp45_1765-2500.nc`). Used for climate scenario
+simulations.
+
+#### [sim_config_clm]
+
+eCLM land surface component configuration.
+
+##### domainfile_clm
+
+Domain file for eCLM grid definition. Specifies land/lake mask and
+grid structure (e.g.,
+`domain.lnd.ICON-11_ICON-11.230302_landlake_halo.nc`).
+
+##### surffile_clm
+
+Surface data file for eCLM containing vegetation, soil properties, and
+land use (e.g.,
+`surfdata_ICON-11_hist_16pfts_Irrig_CMIP6_simyr2000_c230302_gcvurb-pfsoil_halo.nc`).
+
+##### clmoutvar
+
+Comma-separated list of eCLM output variables. Examples:
+
+- `'TWS'` - Total water storage
+- `'H2OSOI'` - Soil moisture
+- `'TSOI'` - Soil temperature
+- `'TG'` - Ground temperature
+- `'EFLX_LH_TOT'` - Total latent heat flux
+- `'FSH'` - Sensible heat flux
+- `'FSA'` - Absorbed shortwave radiation
+- `'FSR'` - Reflected shortwave radiation
+- `'FIRA'` - Net longwave radiation
+- `'Rnet'` - Net radiation
+- `'EFLX_SOIL_GRND'` - Ground heat flux
+
+#### [sim_config_parflow]
+
+ParFlow subsurface component configuration.
+
+##### pfl_ngx
+
+Number of grid cells in x-direction for ParFlow domain (e.g., `444`).
+
+##### pfl_ngy
+
+Number of grid cells in y-direction for ParFlow domain (e.g., `432`).
+
+##### pfl_mask
+
+Filename for ParFlow solid file mask defining inactive cells (e.g.,
+`PfbMask4SolidFile_eCLM.pfsol`).
+
+##### pfloutmfilt
+
+Output frequency multiplier for ParFlow files. Controls how often
+output is written (e.g., `24` means every 24 timesteps).
+
+##### pfltsfilerst
+
+Timestep file index for ParFlow restart files. Typically set to
+`$((pfloutmfilt - 1))` to align with output frequency.
+
+#### [sim_config_oas]
+
+OASIS coupler configuration for component coupling.
+
+##### icon_ncg
+
+Number of grid cells for ICON in OASIS coupler (e.g., `189976`). Must
+match ICON grid definition.
+
+##### clm_ngx
+
+Number of grid cells in x-direction for eCLM in OASIS coupler (e.g.,
+`189976`). For unstructured grids, represents total cell count.
+
+##### clm_ngy
+
+Number of grid cells in y-direction for eCLM in OASIS coupler. For
+unstructured grids, set to `1`.
+
+### Post-processing Configuration
+
+#### [pos_config_*]
+
+Configuration settings for post-processing stage. Currently empty in
+the default configuration.
+
+### Visualization Configuration
+
+#### [vis_config_*]
+
+Configuration settings for visualization stage. Currently empty in the
+default configuration.
