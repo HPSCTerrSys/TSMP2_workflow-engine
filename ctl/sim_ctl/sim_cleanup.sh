@@ -58,7 +58,8 @@ if [[ "${modelid}" == *clm* ]]; then
   cp -v ${sim_dir}/eCLM_*.clm2.h* ${simout_dir}/out/eclm
 
   # Model log
-  cp -v ${sim_dir}/logs/${SLURM_JOB_ID}.comp_*.log  ${simout_dir}/log/
+  cp -v ${sim_dir}/logs/${SLURM_JOB_ID}.comp_*.log ${simout_dir}/log/
+  cp -v ${sim_dir}/timing/model_timing_stats ${simout_dir}/log/
 
   # Restart
   mkdir -p ${simout_dir}/rst/eclm ${simrst_dir}/eclm
@@ -81,6 +82,7 @@ if [[ "${modelid}" == *parflow* ]]; then
 
   # Model log
   cp -v ${sim_dir}/*out.kinsol.log ${simout_dir}/log/
+  cp -v ${sim_dir}/*out.log ${simout_dir}/log/
   cp -v ${sim_dir}/*out.timing* ${simout_dir}/log/
 
   # Restart
