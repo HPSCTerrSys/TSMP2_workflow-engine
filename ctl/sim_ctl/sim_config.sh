@@ -142,7 +142,7 @@ if [[ "${modelid}" == *clm* ]]; then
   clmoutvar=${clmoutvar:-'TG'}
 #
   topofile_clm=${topofile_clm:-topodata_0.9x1.25_USGS_070110_stream_c151201.nc}
-  fini_clm=${fini_clm:-${simrstm1_dir}/eclm/eCLM_eur-11u.clm2.r.$(date -u -d "${startdate}" +%Y-%m-%d)-$(printf "%05d" $(( $(date -d "${startdate}" +%s) % 86400 ))).nc}
+  fini_clm=${fini_clm:-${simrstm1_dir}/eclm/eCLM_${EXP_ID}.clm2.r.$(date -u -d "${startdate}" +%Y-%m-%d)-$(printf "%05d" $(( $(date -d "${startdate}" +%s) % 86400 ))).nc}
   clm_frc_dir=${clm_frc_dir:-${frc_dir}/eclm/forcing/}
 
 # calculation for automated adjustment of clm forcing
