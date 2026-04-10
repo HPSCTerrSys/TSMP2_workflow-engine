@@ -30,4 +30,17 @@ ctl/
 |---- expid.conf    -> model specifications
 ```
 
+Information: Inside `expid.conf`, variables set in the `master.conf`
+can be used (e.g. `MODEL_ID` set in `master.conf` could be used in
+`expid.conf` as `$MODEL_ID`).
 
+## Developer information
+
+Forks (i.e. SimExps) of the Workflow Engine should only change
+- `ctl/master.conf`
+- `ctl/expid.conf`
+- `.gitmodules`.
+
+All other changes should be applied to the main repository through
+Pull Requests (PRs) under
+<https://github.com/HPSCTerrSys/TSMP2_workflow-engine/pulls>.
