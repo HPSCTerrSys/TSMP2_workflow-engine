@@ -233,6 +233,11 @@ if [[ "${modelid}" == *parflow* ]]; then
   [[ "$lreal" == "true" ]] && cp ${geo_dir}/parflow/static/*sa .
   [[ "$lreal" == "true" ]] && cp ${geo_dir}/parflow/static/${pfl_mask} ${pfl_mask}
 
+# copy evaptrans file
+  [[ "${run_oasis}" == "false" ]] && cp ${frc_dir}/parflow/evaptrans/evaptrans_$(date -u -d "${startdate}" +%Y%m).nc evaptrans.nc
+  [[ "${run_oasis}" == "false" ]] && sed -i "s#__UseEvapTrans__#True#" coup_oas.tcl
+  [[ "${run_oasis}" == "true" ]] && sed -i "s#__UseEvapTrans__#False#" coup_oas.tcl
+
 # PFL NML
   [[ "$lreal" == "true" ]] && sed -i "s/__nprocx_pfl_bldsva__/$pfl_procX/" ascii2pfb_slopes.tcl
   [[ "$lreal" == "true" ]] && sed -i "s/__nprocy_pfl_bldsva__/$pfl_procY/" ascii2pfb_slopes.tcl
