@@ -33,9 +33,9 @@ workflow engine. It is located in `ctl/master.conf`.
 
 ## logs
 
-During runtime, log files are initially written to the directory `$wfe_dir/ctl/logs/`. Upon successful completion of the workflow and execution of the clean-up phase, these logs are automatically relocated to `$wfe_dir/ctl/simres/MODELID_DATE/log/`, where they are archived together with the corresponding simulation results.
+During runtime, job log files are initially written to the directory `$wfe_dir/ctl/logs/`. The log-file of the model compnents are written in the run-directory. Upon successful completion of the workflow and execution of the clean-up phase, these logs are automatically relocated to `$wfe_dir/ctl/simres/MODELID_DATE/log/`, where they are archived together with the corresponding simulation results.
 
-If the simulation terminates prematurely (e.g., due to a crash) before the clean-up phase is reached, or if the clean-up step has been explicitly deactivated, the log files will remain in their original location at `$wfe_dir/ctl/logs/`. In such cases, users are required to manually move the log files to the appropriate results directory or alternativly remove them manually.
+If the simulation terminates prematurely (e.g., due to a crash) before the clean-up phase is reached, or if the clean-up step has been explicitly deactivated, the job log files will remain in their original location at `$wfe_dir/ctl/logs/`. In such cases, users are required to manually move the log files to the appropriate results directory or alternativly remove them manually.
 
 ### Main Settings
 
