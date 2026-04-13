@@ -1,10 +1,12 @@
-# 0. Preamble
+# Quickstart
+
+## 0. Preamble
 
 The TSMP2 workflow engine (WFE) is designed to support a wide range of simulation applications. To facilitate immediate usability, it is distributed with a default test case that enables users to operate the WFE without requiring additional configuration or data. A specific configration is called simulation experiment. Please go to Setup, Build and Run for much more information.
 
-# 1. TSMP pan-european domain
+## 1. TSMP pan-european domain
 
-## 1.1 Description of the model experiment
+### 1.1 Description of the model experiment
 
 The numerical experiment covers a pan-European area, according to the EUR-12 CORDEX domain. [EURO-CORDEX](https://euro-cordex.net) is the European branch of the international CORDEX initiative, which is a program sponsored by the World Climate Research Program (WCRP) to organize an internationally coordinated framework to produce improved regional climate change projections for all land regions worldwide. The respective horizontal grid has a horizontal grid size of 0.11°(∼12 km).
 
@@ -14,7 +16,7 @@ ICON is forced within ERA-5 [Hersbach et al.(2020)](https://doi.org/10.1002/qj.3
 
 In this section, we want to perform a 24-hour simulation using the fully coupled TSMP2 including ICON-eCLM-ParFlow coupled with the OASIS3-MCT coupler over the EURO-CORDEX domain with about 0.11° grid spacing. ICON is doing its calculations - as the name already suggests - on an icosahedral grid structure, whereas eCLM and ParFlow use a curvilinear grid. The TSMP2 system allows, similar to TSMP1, different grids between the components and uses resampling weights for the exchange of information between the components.
 
-## 1.2 TSMP Experiment setup
+### 1.2 TSMP Experiment setup
 
 First, open a terminal and let's prepare the environment for TSMP2 runs:
 
@@ -26,7 +28,7 @@ jutil env activate -p PROJECTNAME
 echo $BUDGET_ACCOUNTS
 ```
 
-# 2. Download the experiment setup
+## 2. Download the experiment setup
 
 Get the real test case files by running
 
@@ -51,7 +53,7 @@ cd $TSMP2_WFE/dta
 wget -x -l 8 -nH --cut-dirs=4 -e robots=off --recursive --no-parent --reject="index.html*" https://datapub.fz-juelich.de/slts/tsmp_testcases/data/tsmp2_eur12-iic_wfe_iniforc/
 ```
 
-## 2.1 Check the configuration files
+### 2.1 Check the configuration files
 
 Have a look at the configuration files by running:
 
@@ -63,7 +65,7 @@ vim expid.conf
 
 > :notepad_spiral: **NOTE**: Which model-combination is set?
 
-## 2.2. Check TSMP2 binaries
+### 2.2. Check TSMP2 binaries
 
 In case that you have prebuilt TSMP2 model binaries, we are going to set the path to the shared `TSMP2` folder:
 
@@ -78,7 +80,7 @@ cd ${wfe_dir}/src/TSMP2
 ./build_tsmp2.sh icon eclm parflow
 ```
 
-# 3. Running the simulation
+## 3. Running the simulation
 
 First, we are going to set the path to the shared `TSMP2` folder that contains the prebuilt binaries:
 
