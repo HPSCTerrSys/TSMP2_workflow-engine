@@ -1,6 +1,6 @@
 # 0. Preamble
 
-The TSMP2 workflow engine (WFE) is designed to support a wide range of simulation applications. To facilitate immediate usability, it is distributed with a default test case that enables users to operate the WFE without requiring additional configuration or data. Please go to Setup, Build and Run for much more information.
+The TSMP2 workflow engine (WFE) is designed to support a wide range of simulation applications. To facilitate immediate usability, it is distributed with a default test case that enables users to operate the WFE without requiring additional configuration or data. A specific configration is called simulation experiment. Please go to Setup, Build and Run for much more information.
 
 # 1. TSMP pan-european domain
 
