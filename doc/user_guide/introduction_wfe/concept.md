@@ -1,6 +1,6 @@
-# WFE concept
+# WorkFlow Engine concept
 
-## Workflow Engine as the skeleton
+## Workflow Engine (WFE) as the skeleton
 The workflow engine functions as the skeletal framework that holds the entire system together. Much like a human skeleton provides structure and support for bodily functions, the workflow engine organizes and orchestrates the various components and configuration involved in prforming and anaylsing the simulation. It ensures that tasks, tools, and set-ups are not only available but interconnected in a coherent, reproduceable and maintainable structure. By providing this underlying architecture, the workflow engine enables a convenient and reproduceable way to perform simulations, making it central to the platform’s operation.
 
 ## ... is not functional in itself
