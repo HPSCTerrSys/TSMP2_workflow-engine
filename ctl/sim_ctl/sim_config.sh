@@ -222,6 +222,7 @@ if [[ "${modelid}" == *parflow* ]]; then
   pfloutfrq=${pfloutfrq:-1.0}
   pfloutmfilt=${pfloutmfilt:-1}
   pfltsfilerst=${pfltsfilerst:-0}
+  pfllevaptrans=${pfllevaptrans:-false}
 
 # copy namelist
   [[ "$lreal" == "true" ]] && cp ${nml_dir}/parflow/ascii2pfb_slopes.tcl ascii2pfb_slopes.tcl
@@ -234,8 +235,10 @@ if [[ "${modelid}" == *parflow* ]]; then
   [[ "$lreal" == "true" ]] && cp ${geo_dir}/parflow/static/${pfl_mask} ${pfl_mask}
 
 # copy evaptrans file
-  [[ "${run_oasis}" == "false" ]] && cp ${frc_dir}/parflow/evaptrans/evaptrans_$(date -u -d "${startdate}" +%Y%m).nc evaptrans.nc
-  [[ "${run_oasis}" == "false" ]] && sed -i "s#__UseEvapTrans__#True#" coup_oas.tcl
+  if [[ "${run_oasis}" == "false" ]] && [[ "${pfllevaptrans}" == "true" ]]; then
+     cp ${frc_dir}/parflow/evaptrans/evaptrans_$(date -u -d "${startdate}" +%Y%m).nc evaptrans.nc
+     sed -i "s#__UseEvapTrans__#True#" coup_oas.tcl
+  fi # if evaptrans
   [[ "${run_oasis}" == "true" ]] && sed -i "s#__UseEvapTrans__#False#" coup_oas.tcl
 
 # PFL NML
