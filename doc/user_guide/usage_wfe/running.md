@@ -39,6 +39,12 @@ If the simulation terminates prematurely (e.g., due to a crash) before the clean
 
 ### Main Settings
 
+#### scheduler
+
+Job scheduler to submit workflow jobs to compute. Options: `slurm` (default), `pbs` (OpenPBS/Torque), or `local`. Selects the submission command (`sbatch`/`qsub`/none), resource-request syntax, dependency handling, and the MPMD launch mechanism used for the coupled simulation step (Slurm `srun --multi-prog` vs. an Open MPI `mpiexec --app` mapping file, used by both `pbs` and `local`).
+
+`local` is for machines without a batch scheduler (e.g. a plain Ubuntu workstation): each workflow stage runs synchronously in the foreground (no queue, no wallclock/partition/account/mail settings), with stdout/stderr redirected into `ctl/logs/`. Requires a working local MPI installation (`mpiexec`) for the simulation step, and enough local cores to cover `npnode`.
+
 #### MODEL_ID
 
 Specifies which model components to use. Options include but are not
@@ -139,8 +145,9 @@ only executed once the previous is done.
 
 #### mailtype
 
-Email notification trigger for SLURM jobs. Options: `NONE`, `BEGIN`,
-`END`, `FAIL`, `REQUEUE`, `ALL`.
+Email notification trigger for scheduler jobs. Options: `NONE`, `BEGIN`,
+`END`, `FAIL`, `REQUEUE`, `ALL`. Mapped to the equivalent PBS `-m` code
+when `scheduler=pbs`.
 
 #### mailaddress
 
@@ -159,7 +166,8 @@ Number of cores per node. Leave empty to use machine defaults.
 
 #### partition
 
-Compute partition to use. Leave empty to use machine defaults.
+Compute partition (`slurm`) or queue (`pbs`) to use. Leave empty to use
+machine defaults.
 
 #### account
 

@@ -23,21 +23,37 @@ if [ -e "${sim_dir}" ]; then
 fi
 mkdir -p $sim_dir
 
-# slm_multiprog
-if [[ "${modelid}" == *icon* ]]; then
-   echo "0-__icon_pe__   ./icon" >> ${sim_dir}/slm_multiprog_mapping.conf
+# MPMD program-rank mapping file for the coupled run (format depends on scheduler)
+if [[ "${scheduler}" == "pbs" || "${scheduler}" == "local" ]]; then
+   # Open MPI app-context file, ranks assigned per-line count (used with 'mpiexec --app')
+   mpmd_mapping_file=mpi_multiprog_mapping.conf
+   if [[ "${modelid}" == *icon* ]]; then
+      echo "-np ${ico_proc} ./icon" >> ${sim_dir}/${mpmd_mapping_file}
+   fi
+   if [[ "${modelid}" == *eclm* ]]; then
+      echo "-np ${clm_proc} ./eclm" >> ${sim_dir}/${mpmd_mapping_file}
+   fi
+   if [[ "${modelid}" == *parflow* ]]; then
+      echo "-np ${pfl_proc} ./parflow __pfl_expid__" >> ${sim_dir}/${mpmd_mapping_file}
+   fi
+else
+   # Slurm multi-prog rank-range mapping file (used with 'srun --multi-prog')
+   mpmd_mapping_file=slm_multiprog_mapping.conf
+   if [[ "${modelid}" == *icon* ]]; then
+      echo "0-__icon_pe__   ./icon" >> ${sim_dir}/${mpmd_mapping_file}
+   fi
+   if [[ "${modelid}" == *eclm* ]]; then
+      echo "__clm_ps__-__clm_pe__ ./eclm" >> ${sim_dir}/${mpmd_mapping_file}
+   fi
+   if [[ "${modelid}" == *parflow* ]]; then
+      echo "__pfl_ps__-__pfl_pe__ ./parflow __pfl_expid__" >>  ${sim_dir}/${mpmd_mapping_file}
+   fi
+   sed -i "s/__icon_pe__/$(($ico_proc-1))/" ${sim_dir}/${mpmd_mapping_file}
+   sed -i "s/__clm_ps__/$(($ico_proc))/" ${sim_dir}/${mpmd_mapping_file}
+   sed -i "s/__clm_pe__/$(($ico_proc+$clm_proc-1))/" ${sim_dir}/${mpmd_mapping_file}
+   sed -i "s/__pfl_ps__/$(($ico_proc+$clm_proc))/" ${sim_dir}/${mpmd_mapping_file}
+   sed -i "s/__pfl_pe__/$(($ico_proc+$clm_proc+$pfl_proc-1))/" ${sim_dir}/${mpmd_mapping_file}
 fi
-if [[ "${modelid}" == *eclm* ]]; then
-   echo "__clm_ps__-__clm_pe__ ./eclm" >> ${sim_dir}/slm_multiprog_mapping.conf
-fi
-if [[ "${modelid}" == *parflow* ]]; then
-   echo "__pfl_ps__-__pfl_pe__ ./parflow __pfl_expid__" >>  ${sim_dir}/slm_multiprog_mapping.conf
-fi
-sed -i "s/__icon_pe__/$(($ico_proc-1))/" ${sim_dir}/slm_multiprog_mapping.conf
-sed -i "s/__clm_ps__/$(($ico_proc))/" ${sim_dir}/slm_multiprog_mapping.conf
-sed -i "s/__clm_pe__/$(($ico_proc+$clm_proc-1))/" ${sim_dir}/slm_multiprog_mapping.conf
-sed -i "s/__pfl_ps__/$(($ico_proc+$clm_proc))/" ${sim_dir}/slm_multiprog_mapping.conf
-sed -i "s/__pfl_pe__/$(($ico_proc+$clm_proc+$pfl_proc-1))/" ${sim_dir}/slm_multiprog_mapping.conf
 
 # change to run directory
 cd ${sim_dir}
@@ -259,7 +275,7 @@ if [[ "${modelid}" == *parflow* ]]; then
   sed -i "s#__inifile__#$(basename "$fini_pfl")#" coup_oas.tcl
   sed -i "s/__pfltsfilerst__/${pfltsfilerst}/" coup_oas.tcl
   sed -i "s/__pfloutmfilt__/${pfloutmfilt}/" coup_oas.tcl
-  sed -i "s/__pfl_expid__/$EXP_ID/" slm_multiprog_mapping.conf
+  sed -i "s/__pfl_expid__/$EXP_ID/" ${mpmd_mapping_file}
 
   # --- execute ParFlow distributeing tcl-scripts
   export PARFLOW_DIR=${tsmp2_install_dir}
@@ -305,7 +321,7 @@ if ${debugmode}; then
 
 # create job submission script (tsmp2.job)
 echo "#!/usr/bin/env bash" > tsmp2.job
-echo "#SBATCH ${jobsimstring//[$'\t\r\n']}" >> tsmp2.job
+echo "$(sched_directive_prefix) ${jobsimstring//[$'\t\r\n']}" >> tsmp2.job
 
 # add modelid, which is needed
 echo "" >> tsmp2.job

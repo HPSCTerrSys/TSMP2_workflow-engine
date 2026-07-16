@@ -17,10 +17,11 @@ source $LOADENVS
 if [[ "${modelid}" == *clm* ]]; then
 
 # Set PIO log files
-if [[ -z $SLURM_JOB_ID || "$SLURM_JOB_ID" == " " ]]; then
+job_id=$(sched_job_id)
+if [[ -z "$job_id" || "$job_id" == " " ]]; then
   LOGID=$(date +%Y-%m-%d_%H.%M.%S)
 else
-  LOGID=$SLURM_JOB_ID
+  LOGID=$job_id
 fi
 mkdir -p logs timing/checkpoints
 LOGDIR=$(realpath logs)
@@ -47,7 +48,11 @@ fi # parflow
 # Run model
 TIME_START=$(date +%s)
 echo ">>> ${modelid} started at $(date +%H:%M:%S)"
-srun --multi-prog slm_multiprog_mapping.conf
+if [[ "${scheduler}" == "pbs" || "${scheduler}" == "local" ]]; then
+  mpiexec --app ${mpmd_mapping_file}
+else
+  srun --multi-prog ${mpmd_mapping_file}
+fi
 TIME_END=$(date +%s)
 echo ">>> ${modelid} finished at $(date +%H:%M:%S)"
 echo ">>> ${modelid} runtime: $(date -u -d "0 $TIME_END sec - $TIME_START sec" +"%H:%M:%S")"
