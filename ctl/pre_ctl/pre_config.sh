@@ -56,6 +56,42 @@ echo "List of forcing files: "${listfrcfile[@]}
 
 fi
 
+####################
+# PDAF
+####################
+if [[ "${modelid}" == *pdaf* ]]; then
+
+parse_config_file ${conf_file} "pre_config_pdaf"
+
+# ---------------------------------------------------------------------------
+# Perturb atmospheric forcing
+# ---------------------------------------------------------------------------
+num_ensemble=${num_ensemble:-50}
+
+if [[ "${modelid}" == *clm* ]]; then
+
+lsmforcpertsrc_dir=${lsmforcpertsrc_dir:-${ctl_dir}/../src/eCLM_atmforcing/mkperturb}
+eclmfrc_dir=${eclmfrc_dir:-${frc_dir}/eclm/forcing/}
+pdaffrc_dir=${pdaffrc_dir:-${eclmfrc_dir}}
+
+check_var_def pre_config_pdaf_env $(find ${lsmforcpertsrc_dir}/../ -type f -name "*sh") "Using environment file "
+
+pyvenv_pre_config_pdaf=${pyvenv_pre_config_pdaf:-${ctl_dir}/virtualenvs/pyenv_pre_config_pdaf}
+
+# load environment
+source ${pre_config_pdaf_env}
+
+# create virtual env if it does not exist yet
+if [ ! -d "${pyvenv_pre_config_pdaf}" ]; then
+   echo "Virtual env not found at ${pyvenv_pre_config_pdaf}, installing "
+   python -m venv ${pyvenv_pre_config_pdaf}
+   source ${pyvenv_pre_config_pdaf}/bin/activate
+   pip install ${ctl_dir}/../src/eCLM_atmforcing/
+   deactivate
+fi
+
+fi # clm
+fi # pdaf
 
 if ${debugmode}; then
 
