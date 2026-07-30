@@ -23,10 +23,11 @@ if [ -e "${sim_dir}" ]; then
 fi
 mkdir -p $sim_dir
 
-# MPMD program-rank mapping file for the coupled run (format depends on scheduler)
+# MPMD program-rank mapping file and run command for the coupled run (format depend on scheduler)
 if [[ "${scheduler}" == "pbs" || "${scheduler}" == "local" ]]; then
    # Open MPI app-context file, ranks assigned per-line count (used with 'mpiexec --app')
    mpmd_mapping_file=mpi_multiprog_mapping.conf
+   mpmd_run_cmd="mpiexec --app"
    if [[ "${modelid}" == *icon* ]]; then
       echo "-np ${ico_proc} ./icon" >> ${sim_dir}/${mpmd_mapping_file}
    fi
@@ -39,6 +40,7 @@ if [[ "${scheduler}" == "pbs" || "${scheduler}" == "local" ]]; then
 else
    # Slurm multi-prog rank-range mapping file (used with 'srun --multi-prog')
    mpmd_mapping_file=slm_multiprog_mapping.conf
+   mpmd_run_cmd="srun --multi-prog"
    if [[ "${modelid}" == *icon* ]]; then
       echo "0-__icon_pe__   ./icon" >> ${sim_dir}/${mpmd_mapping_file}
    fi
@@ -323,9 +325,11 @@ if ${debugmode}; then
 echo "#!/usr/bin/env bash" > tsmp2.job
 echo "$(sched_directive_prefix) ${jobsimstring//[$'\t\r\n']}" >> tsmp2.job
 
-# add modelid, which is needed
+# add modelid and MPMD run settings, which are needed
 echo "" >> tsmp2.job
 echo "modelid=${modelid}" >> tsmp2.job
+echo "mpmd_mapping_file=${mpmd_mapping_file}" >> tsmp2.job
+echo "mpmd_run_cmd=\"${mpmd_run_cmd}\"" >> tsmp2.job
 
 # cat sim run script into submission script
 cat ${ctl_dir}/sim_ctl/sim_run.sh | tail -n +2 >> tsmp2.job # start from line 2

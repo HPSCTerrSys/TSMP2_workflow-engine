@@ -48,11 +48,7 @@ fi # parflow
 # Run model
 TIME_START=$(date +%s)
 echo ">>> ${modelid} started at $(date +%H:%M:%S)"
-if [[ "${scheduler}" == "pbs" || "${scheduler}" == "local" ]]; then
-  mpiexec --app ${mpmd_mapping_file}
-else
-  srun --multi-prog ${mpmd_mapping_file}
-fi
+${mpmd_run_cmd} ${mpmd_mapping_file}
 TIME_END=$(date +%s)
 echo ">>> ${modelid} finished at $(date +%H:%M:%S)"
 echo ">>> ${modelid} runtime: $(date -u -d "0 $TIME_END sec - $TIME_START sec" +"%H:%M:%S")"
