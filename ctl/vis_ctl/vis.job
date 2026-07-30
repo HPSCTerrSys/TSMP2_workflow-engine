@@ -3,6 +3,7 @@
 ###
 # Import functions
 ###
+source ${ctl_dir}/utils_tsmp2.sh
 source ${ctl_dir}/vis_ctl/vis_config.sh
 source ${ctl_dir}/vis_ctl/vis_run.sh
 source ${ctl_dir}/vis_ctl/vis_cleanup.sh

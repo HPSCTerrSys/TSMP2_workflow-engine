@@ -67,8 +67,11 @@ elif [ "${SYSTEMNAME}" == "jupiter" ]; then
 check_var_def npnode 288 "Taking user setting for npnode "
 check_var_def partition booster "Taking user setting and partition "
 else
-if ( [ -z $npnode] | [ -z $partition ] ); then
-echo "No npnode and/or partition for machine '$SYSTEMNAME'. Valid machine defaults for juwels/jurecadc/jusuf."
+if [ -z "$npnode" ]; then
+echo "No npnode for machine '$SYSTEMNAME'. Please set npnode manually in master.conf. Valid machine defaults for juwels/jurecadc/jusuf/jupiter."
+fi
+if [ -z "$partition" ] && [ "${scheduler:-slurm}" != "local" ]; then
+echo "No partition/queue for machine '$SYSTEMNAME'. Please set partition manually in master.conf. Valid machine defaults for juwels/jurecadc/jusuf/jupiter."
 fi
 fi
 account_def=${BUDGET_ACCOUNTS:-slts}
@@ -77,16 +80,28 @@ check_var_def tsmp2_dir $(realpath  ${ctl_dir}/../src/TSMP2) "Taking TSMP2 defau
 check_var_def tsmp2_install_dir ${tsmp2_dir}/bin/${SYSTEMNAME^^}_${MODEL_ID} \
               "Taking TSMP2 component binaries from default dir at "
 check_var_def tsmp2_env $(find ${tsmp2_install_dir}/ -type f -name "*mpi") "Using environment file "
+check_var_def scheduler slurm "Using job scheduler="
 
-# generic sbatch string
-jobgenstring="--export=ALL \
-              --account=${account} \
-              --partition=${partition} \
-              --mail-type=${mailtype} \
-              --mail-user=${mailaddress} \
-              --reservation=${reservation}"
+# generic job-submission string (scheduler-specific: sbatch or qsub options)
+if [[ "${scheduler}" == "pbs" ]]; then
+  jobgenstring="-A ${account} \
+                -q ${partition} \
+                -m $(sched_pbs_mailcode) \
+                ${mailaddress:+-M ${mailaddress}} \
+                -V"
+elif [[ "${scheduler}" == "local" ]]; then
+  # no queue, no account/partition/mail options: sched_submit runs jobs directly
+  jobgenstring=""
+else
+  jobgenstring="--export=ALL \
+                --account=${account} \
+                --partition=${partition} \
+                --mail-type=${mailtype} \
+                --mail-user=${mailaddress} \
+                ${reservation:+--reservation=${reservation}}"
+fi
 
-# convert arrays to string for slurm job script
+# convert arrays to string for job script
 lprestr="${lpre[@]}"
 lsimstr="${lsim[@]}"
 lposstr="${lpos[@]}"
@@ -129,18 +144,13 @@ echo "==="
 # check if any is true
 if [[ ${lpre[*]} =~ true ]]; then
 
-jobprestring="${jobgenstring} \
-              --job-name="${expid}_${caseid}pre_${dateshort}" \
-              --time=${pre_wallclock} \
-              --output="${log_dir}/%x_%j.out" \
-              --error="${log_dir}/%x_%j.err" \
-              --nodes=1 \
-              --ntasks=${npnode}"
+jobname_pre="${expid}_${caseid}pre_${dateshort}"
+jobprestring="${jobgenstring} $(sched_step_opts "${jobname_pre}" "${pre_wallclock}" 1 "${npnode}")"
 
 # Submit to pre.job
 if (! ${debugmode}) ; then
   # Submit to sim.job
-  submit_pre=$(sbatch ${jobprestring} ${ctl_dir}/pre_ctl/pre.job 2>&1)
+  submit_pre=$(sched_submit "${jobname_pre}" "${jobprestring}" "${ctl_dir}/pre_ctl/pre.job")
   echo $submit_pre" for preprocessing"
 else
   # Set lpre run & cleanup to false and source pre.job
@@ -151,7 +161,7 @@ else
 fi
 
 # get jobid
-pre_id=$(echo $submit_pre | awk 'END{print $(NF)}')
+pre_id=$(sched_parse_jobid "$submit_pre")
 
 fi # $lpre
 
@@ -180,18 +190,13 @@ else
 fi # lpre
 
 #
-jobsimstring="${jobgenstring} \
-              --job-name="${expid}_${caseid}sim_${dateshort}" \
-              --dependency=${dependencystring} \
-              --time=${sim_wallclock} \
-              --output="${log_dir}/%x_%j.out" \
-              --error="${log_dir}/%x_%j.err" \
-              --nodes=${tot_node} \
-              --ntasks=${tot_proc}"
+jobname_sim="${expid}_${caseid}sim_${dateshort}"
+jobsimstring="${jobgenstring} $(sched_step_opts "${jobname_sim}" "${sim_wallclock}" "${tot_node}" "${tot_proc}") \
+              $(sched_dependency_opt "${dependencystring}")"
 
 if (! ${debugmode}) ; then
   # Submit to sim.job
-  submit_sim=$(sbatch ${jobsimstring} ${ctl_dir}/sim_ctl/sim.job 2>&1)
+  submit_sim=$(sched_submit "${jobname_sim}" "${jobsimstring}" "${ctl_dir}/sim_ctl/sim.job")
   echo $submit_sim" for simulation"
 else
   # Set lsim run & cleanup to false and source sim.job
@@ -202,7 +207,7 @@ else
 fi
 
 # get jobid
-sim_id=$(echo $submit_sim | awk 'END{print $(NF)}')
+sim_id=$(sched_parse_jobid "$submit_sim")
 
 fi # $lsim
 
@@ -221,20 +226,16 @@ else
 fi
 
 # Configure TSMP2 Postprocessing
-jobposstring="${jobgenstring} \
-              --job-name="${expid}_${caseid}pos_${dateshort}" \
-              --time=${pos_wallclock} \
-              --output="${log_dir}/%x_%j.out" \
-              --error="${log_dir}/%x_%j.err" \
-              --nodes=1 \
-              --ntasks=${npnode}"
+jobname_pos="${expid}_${caseid}pos_${dateshort}"
+jobposstring="${jobgenstring} $(sched_step_opts "${jobname_pos}" "${pos_wallclock}" 1 "${npnode}") \
+              $(sched_dependency_opt "${dependencystring}")"
 
 # Submit to pos.job
-submit_pos=$(sbatch ${jobposstring} ${ctl_dir}/pos_ctl/pos.job 2>&1)
+submit_pos=$(sched_submit "${jobname_pos}" "${jobposstring}" "${ctl_dir}/pos_ctl/pos.job")
 echo $submit_pos" for postprocessing"
 
 # get jobid
-pos_id=$(echo $submit_pos | awk 'END{print $(NF)}')
+pos_id=$(sched_parse_jobid "$submit_pos")
 
 fi # $lpos
 
@@ -253,20 +254,16 @@ else
 fi
 
 # Configure TSMP2 Postprocessing
-jobvisstring="${jobgenstring} \
-              --job-name="${expid}_${caseid}vis_${dateshort}" \
-              --time=${vis_wallclock} \
-              --output="${log_dir}/%x_%j.out" \
-              --error="${log_dir}/%x_%j.err" \
-              --nodes=1 \
-              --ntasks=${npnode}"
+jobname_vis="${expid}_${caseid}vis_${dateshort}"
+jobvisstring="${jobgenstring} $(sched_step_opts "${jobname_vis}" "${vis_wallclock}" 1 "${npnode}") \
+              $(sched_dependency_opt "${dependencystring}")"
 
 # Submit to vis.job
-submit_vis=$(sbatch ${jobvisstring} ${ctl_dir}/vis_ctl/vis.job 2>&1)
+submit_vis=$(sched_submit "${jobname_vis}" "${jobvisstring}" "${ctl_dir}/vis_ctl/vis.job")
 echo $submit_vis" for visualization"
 
 # get jobid
-vis_id=$(echo $submit_vis | awk 'END{print $(NF)}')
+vis_id=$(sched_parse_jobid "$submit_vis")
 
 fi # $lvis
 

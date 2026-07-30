@@ -97,7 +97,7 @@ if ${debugmode}; then
 
 # create job submission script (pre.job)
 echo "#!/usr/bin/env bash" > pre.job
-echo "#SBATCH ${jobprestring//[$'\t\r\n']}" >> pre.job
+echo "$(sched_directive_prefix) ${jobprestring//[$'\t\r\n']}" >> pre.job
 
 # add modelid, which is needed
 echo "" >> pre.job

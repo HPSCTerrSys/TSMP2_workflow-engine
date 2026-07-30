@@ -6,6 +6,9 @@ echo "###"
 echo "# Cleanup Simulation"
 echo "###"
 
+job_id=$(sched_job_id)
+job_name=$(sched_job_name)
+
 parse_config_file ${conf_file} "sim_clean_general"
 
 file_op_mode=${file_op_mode:-"copy"}
@@ -70,7 +73,7 @@ if [[ "${modelid}" == *clm* ]]; then
   file_op ${sim_dir}/eCLM_*.clm2.h* ${simout_dir}/out/eclm
 
   # Model log
-  file_op ${sim_dir}/logs/${SLURM_JOB_ID}.comp_*.log ${simout_dir}/log/
+  file_op ${sim_dir}/logs/${job_id}.comp_*.log ${simout_dir}/log/
   file_op ${sim_dir}/timing/model_timing_stats ${simout_dir}/log/
 
   # Restart
@@ -111,13 +114,22 @@ if [[ "${modelid}" == *parflow* ]]; then
 
 fi # parflow
 
-file_op ${sim_dir}/slm_multiprog_mapping.conf ${simout_dir}/log/
+file_op ${sim_dir}/${mpmd_mapping_file} ${simout_dir}/log/
 
 # sim logs
-mv ${log_dir}/${SLURM_JOB_NAME}_${SLURM_JOB_ID}.{err,out} ${simout_dir}/log/.
+if [[ "${scheduler}" == "pbs" ]]; then
+  mv ${log_dir}/${job_name}.{e,o}${job_id} ${simout_dir}/log/${job_name}_${job_id}.out
+else
+  mv ${log_dir}/${job_name}_${job_id}.{err,out} ${simout_dir}/log/.
+fi
 
 # job info
-echo $(scontrol show job ${SLURM_JOB_ID}) > ${simout_dir}/log/job_info.log
+case "${scheduler}" in
+  slurm) echo $(scontrol show job ${job_id}) > ${simout_dir}/log/job_info.log ;;
+  pbs)   qstat -f ${job_id} > ${simout_dir}/log/job_info.log 2>&1 ;;
+  local) echo "local job ${job_name} (id ${job_id}) ran on $(hostname) at $(date)" > ${simout_dir}/log/job_info.log ;;
+  *)     echo $(scontrol show job ${job_id}) > ${simout_dir}/log/job_info.log ;;
+esac
 
 # remove run directory
 rm -rf ${sim_dir:?}
