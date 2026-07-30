@@ -24,7 +24,7 @@ for yyyymm in "${listfrcfile[@]}"; do
    mkdir -p $yyyymm # temporary directory for scripts
 
    # extract data from ERA5 meteocloud
-   srun --exclusive -n 1 ${lsmforcgensrc_dir}/extract_ERA5_meteocloud.sh iyear=$year imonth=$month \
+   run_serial_step ${lsmforcgensrc_dir}/extract_ERA5_meteocloud.sh iyear=$year imonth=$month \
         outdir=${pre_dir}/${yyyymm} #quiet=y
 
 #  # needs to be done in advance
@@ -35,7 +35,7 @@ for yyyymm in "${listfrcfile[@]}"; do
    ln -s ${cdsapi_dtadir}/download_era5_${year}_$month.zip ${yyyymm}/
 
    # preparation script
-   srun --exclusive -n 1 ${lsmforcgensrc_dir}/prepare_ERA5_input.sh pathdata=${pre_dir}/${yyyymm} \
+   run_serial_step ${lsmforcgensrc_dir}/prepare_ERA5_input.sh pathdata=${pre_dir}/${yyyymm} \
 	                  iyear=$year imonth=$month wrkdir=${yyyymm}
 
 done

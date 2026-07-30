@@ -7,6 +7,17 @@
 # check_var_def - check if variable is defined and if not take default and printing message
 # logging_job_status - log information about the job into job_status.log
 # parse_config_file - parser to read in ini/conf-files
+#
+# Scheduler abstraction to faciliate different schedular
+# sched_pbs_mailcode  - map generic mailtype to a PBS -m code
+# sched_step_opts     - per-job-step submission options (name, walltime, nodes/tasks, log files)
+# sched_dependency_opt - build the scheduler-specific job-dependency flag
+# sched_submit        - submit a job script, returns raw submission output
+# sched_parse_jobid   - extract the job id from submission output
+# sched_job_id        - current job id, read from within a running job
+# sched_job_name      - current job name, read from within a running job
+# sched_directive_prefix - in-script batch-directive comment prefix (#SBATCH / #PBS)
+# run_serial_step     - run a serial helper program (job-step exclusive under slurm, direct under pbs)
 ##
 
 # calculate number of processors for TSMP2 application
@@ -96,13 +107,167 @@ logging_job_status(){
   local step="$1"
 
   if [ "$joblog" = true ] && [ "$debugmode" != true ]; then
-    job_id=$SLURM_JOB_ID
-    job_state=$(scontrol show job $job_id | grep "JobState=" | cut -d= -f2 | cut -d' ' -f1)
+    job_id=$(sched_job_id)
+    case "${scheduler:-slurm}" in
+      slurm)
+        job_state=$(scontrol show job $job_id | grep "JobState=" | cut -d= -f2 | cut -d' ' -f1)
+        ;;
+      pbs)
+        job_state=$(qstat -f "$job_id" 2>/dev/null | awk -F' = ' '/job_state/{print $2}')
+        ;;
+      local)
+        job_state="COMPLETED"
+        ;;
+      *)
+        job_state=$(scontrol show job $job_id | grep "JobState=" | cut -d= -f2 | cut -d' ' -f1)
+        ;;
+    esac
     printf "%10s %8s %3s %15s %14s %10s %10s %14s %8s\n" "${expid}" "${caseid}" "${step}" "${modelid}" \
         "${dateshort}" "${job_id}" "${job_state}" "$(date '+%Y%m%d%H%M%S')" $(date -u -d "0 $timeend sec - $timestart sec" +"%H:%M:%S") \
         >> ${ctl_dir}/job_status.log
   fi
 } # logging_job_status
+
+###
+# Scheduler abstraction: slurm (default), pbs, or local, selected via ${scheduler}
+# 'local' runs job scripts synchronously in the foreground (no queue), for
+# machines without a batch scheduler (e.g. a plain Ubuntu workstation).
+###
+
+# map generic mailtype (NONE,BEGIN,END,FAIL,REQUEUE,ALL) to a PBS -m code
+sched_pbs_mailcode() {
+  case "${mailtype^^}" in
+    BEGIN)            echo "b" ;;
+    END)              echo "e" ;;
+    FAIL|REQUEUE)     echo "a" ;;
+    ALL)              echo "abe" ;;
+    *)                echo "n" ;;
+  esac
+} # sched_pbs_mailcode
+
+# per-job-step submission options (job name, walltime, node/task layout, log files)
+# args: jobname walltime nodes ntasks
+sched_step_opts() {
+  local jobname="$1" walltime="$2" nodes="$3" ntasks="$4"
+
+  case "${scheduler:-slurm}" in
+    slurm)
+      echo "--job-name=${jobname} \
+            --time=${walltime} \
+            --output=${log_dir}/%x_%j.out \
+            --error=${log_dir}/%x_%j.err \
+            --nodes=${nodes} \
+            --ntasks=${ntasks}"
+      ;;
+    pbs)
+      local ppn=$((ntasks/nodes))
+      echo "-N ${jobname} \
+            -l walltime=${walltime} \
+            -l nodes=${nodes}:ppn=${ppn} \
+            -o ${log_dir}/ \
+            -e ${log_dir}/"
+      ;;
+    local)
+      : # no scheduler options: sched_submit runs the job script directly
+      ;;
+    *)
+      echo "--job-name=${jobname} \
+            --time=${walltime} \
+            --output=${log_dir}/%x_%j.out \
+            --error=${log_dir}/%x_%j.err \
+            --nodes=${nodes} \
+            --ntasks=${ntasks}"
+      ;;
+  esac
+} # sched_step_opts
+
+# build the scheduler-specific job-dependency flag
+# args: dependency payload, e.g. "afterok:123:456" (empty => no dependency)
+sched_dependency_opt() {
+  local dep="$1"
+  [ -z "$dep" ] && return 0
+
+  case "${scheduler:-slurm}" in
+    slurm) echo "--dependency=${dep}" ;;
+    pbs)   echo "-W depend=${dep}" ;;
+    local) : ;; # local jobs already run sequentially/blocking, no dependency needed
+    *)     echo "--dependency=${dep}" ;;
+  esac
+} # sched_dependency_opt
+
+# submit a job script; args: jobname opt_string job_script
+# under 'local', runs synchronously in the foreground (blocking) and redirects
+# stdout/stderr into log_dir, matching the slurm output-file naming convention
+sched_submit() {
+  local jobname="$1" opts="$2" job_script="$3"
+
+  case "${scheduler:-slurm}" in
+    slurm)
+      sbatch ${opts} ${job_script} 2>&1
+      ;;
+    pbs)
+      qsub ${opts} ${job_script} 2>&1
+      ;;
+    local)
+      local job_id=$(date +%s%N)
+      TSMP2_LOCAL_JOB_ID="${job_id}" TSMP2_LOCAL_JOB_NAME="${jobname}" \
+        bash ${job_script} > ${log_dir}/${jobname}_${job_id}.out 2> ${log_dir}/${jobname}_${job_id}.err
+      echo "${job_id}"
+      ;;
+    *)
+      sbatch ${opts} ${job_script} 2>&1
+      ;;
+  esac
+} # sched_submit
+
+# extract the job id from a job's submission output
+# args: submission output (e.g. captured from sched_submit)
+sched_parse_jobid() {
+  case "${scheduler:-slurm}" in
+    slurm)     echo "$1" | awk 'END{print $(NF)}' ;;
+    pbs|local) echo "$1" | tail -n1 | tr -d '[:space:]' ;;
+    *)         echo "$1" | awk 'END{print $(NF)}' ;;
+  esac
+} # sched_parse_jobid
+
+# current job id, read from within a running job
+sched_job_id() {
+  case "${scheduler:-slurm}" in
+    slurm) echo "${SLURM_JOB_ID}" ;;
+    pbs)   echo "${PBS_JOBID%%.*}" ;;
+    local) echo "${TSMP2_LOCAL_JOB_ID}" ;;
+    *)     echo "${SLURM_JOB_ID}" ;;
+  esac
+} # sched_job_id
+
+# current job name, read from within a running job
+sched_job_name() {
+  case "${scheduler:-slurm}" in
+    slurm) echo "${SLURM_JOB_NAME}" ;;
+    pbs)   echo "${PBS_JOBNAME}" ;;
+    local) echo "${TSMP2_LOCAL_JOB_NAME}" ;;
+    *)     echo "${SLURM_JOB_NAME}" ;;
+  esac
+} # sched_job_name
+
+# in-script batch-directive comment prefix, used when generating job scripts in debugmode
+sched_directive_prefix() {
+  case "${scheduler:-slurm}" in
+    slurm) echo "#SBATCH" ;;
+    pbs)   echo "#PBS" ;;
+    local) echo "#" ;;
+    *)     echo "#SBATCH" ;;
+  esac
+} # sched_directive_prefix
+
+# run a serial helper program: an exclusive job-step under slurm, directly under pbs/local
+run_serial_step() {
+  case "${scheduler:-slurm}" in
+    slurm)     srun --exclusive -n 1 "$@" ;;
+    pbs|local) "$@" ;;
+    *)         srun --exclusive -n 1 "$@" ;;
+  esac
+} # run_serial_step
 
 
 # input 1: filename of conf-file input 2: section (optional)

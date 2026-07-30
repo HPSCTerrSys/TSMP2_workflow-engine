@@ -3,6 +3,7 @@
 ###
 # Import functions
 ###
+source ${ctl_dir}/utils_tsmp2.sh
 source ${ctl_dir}/pos_ctl/pos_config.sh
 source ${ctl_dir}/pos_ctl/pos_run.sh
 source ${ctl_dir}/pos_ctl/pos_cleanup.sh
