@@ -28,33 +28,10 @@ if [[ "${scheduler}" == "pbs" || "${scheduler}" == "local" ]]; then
    # Open MPI app-context file, ranks assigned per-line count (used with 'mpiexec --app')
    mpmd_mapping_file=mpi_multiprog_mapping.conf
    mpmd_run_cmd="mpiexec --app"
-   if [[ "${modelid}" == *icon* ]]; then
-      echo "-np ${ico_proc} ./icon" >> ${sim_dir}/${mpmd_mapping_file}
-   fi
-   if [[ "${modelid}" == *eclm* ]]; then
-      echo "-np ${clm_proc} ./eclm" >> ${sim_dir}/${mpmd_mapping_file}
-   fi
-   if [[ "${modelid}" == *parflow* ]]; then
-      echo "-np ${pfl_proc} ./parflow __pfl_expid__" >> ${sim_dir}/${mpmd_mapping_file}
-   fi
 else
    # Slurm multi-prog rank-range mapping file (used with 'srun --multi-prog')
    mpmd_mapping_file=slm_multiprog_mapping.conf
    mpmd_run_cmd="srun --multi-prog"
-   if [[ "${modelid}" == *icon* ]]; then
-      echo "0-__icon_pe__   ./icon" >> ${sim_dir}/${mpmd_mapping_file}
-   fi
-   if [[ "${modelid}" == *eclm* ]]; then
-      echo "__clm_ps__-__clm_pe__ ./eclm" >> ${sim_dir}/${mpmd_mapping_file}
-   fi
-   if [[ "${modelid}" == *parflow* ]]; then
-      echo "__pfl_ps__-__pfl_pe__ ./parflow __pfl_expid__" >>  ${sim_dir}/${mpmd_mapping_file}
-   fi
-   sed -i "s/__icon_pe__/$(($ico_proc-1))/" ${sim_dir}/${mpmd_mapping_file}
-   sed -i "s/__clm_ps__/$(($ico_proc))/" ${sim_dir}/${mpmd_mapping_file}
-   sed -i "s/__clm_pe__/$(($ico_proc+$clm_proc-1))/" ${sim_dir}/${mpmd_mapping_file}
-   sed -i "s/__pfl_ps__/$(($ico_proc+$clm_proc))/" ${sim_dir}/${mpmd_mapping_file}
-   sed -i "s/__pfl_pe__/$(($ico_proc+$clm_proc+$pfl_proc-1))/" ${sim_dir}/${mpmd_mapping_file}
 fi
 
 # change to run directory
@@ -277,7 +254,6 @@ if [[ "${modelid}" == *parflow* ]]; then
   sed -i "s#__inifile__#$(basename "$fini_pfl")#" coup_oas.tcl
   sed -i "s/__pfltsfilerst__/${pfltsfilerst}/" coup_oas.tcl
   sed -i "s/__pfloutmfilt__/${pfloutmfilt}/" coup_oas.tcl
-  sed -i "s/__pfl_expid__/$EXP_ID/" ${mpmd_mapping_file}
 
   # --- execute ParFlow distributeing tcl-scripts
   export PARFLOW_DIR=${tsmp2_install_dir}
@@ -318,6 +294,134 @@ if [[ "${run_oasis}" == true ]]; then
   fi
 
 fi # if modelid == oasis
+
+if [[ "${modelid}" == *pdaf* ]]; then
+
+parse_config_file ${conf_file} "sim_config_pdaf"
+
+# ---------------------------------------------------------------------------
+# PDAF configuration
+# ---------------------------------------------------------------------------
+num_ensemble=${num_ensemble:-50}
+pdafinputfilegen_dir=${pdafinputfilegen_dir:-${ctl_dir}/../src/PDAF_input-file-generator/mkenkfpfpar}
+pdafnamelistgen_dir=${pdafnamelistgen_dir:-${ctl_dir}/../src/eCLM_namelist-generator}
+
+check_var_def sim_config_pdaf_env $(find ${pdafinputfilegen_dir}/../ -type f -name "*sh") "Using environment file "
+
+pyvenv_sim_config_pdaf=${pyvenv_sim_config_pdaf:-${ctl_dir}/virtualenvs/pyenv_sim_config_pdaf}
+
+# load environment
+source ${sim_config_pdaf_env}
+
+# create virtual env if it does not exist yet
+if [ ! -d "${pyvenv_sim_config_pdaf}" ]; then
+   echo "Virtual env not found at ${pyvenv_sim_config_pdaf}, installing "
+   python -m venv ${pyvenv_sim_config_pdaf}
+   source ${pyvenv_sim_config_pdaf}/bin/activate
+   pip install ${ctl_dir}/../src/PDAF_input-file-generator/
+   pip install ${pdafnamelistgen_dir}
+   deactivate
+fi
+
+# activate virtual env
+source ${pyvenv_sim_config_pdaf}/bin/activate
+
+if [[ "${modelid}" == *clm* ]]; then
+
+# eCLM_namelist-generator defaults (see create_ensemble_namelists.py argparse defaults)
+eclmfrc_dir=${eclmfrc_dir:-${frc_dir}/eclm/forcing/}
+pdaffrc_dir=${pdaffrc_dir:-${eclmfrc_dir}}
+pdaf_clm_backend=${pdaf_clm_backend:-re}
+pdaf_clm_forcings_dir=${pdaf_clm_forcings_dir:-${pdaffrc_dir}}
+pdaf_clm_suffix_fsurdat=${pdaf_clm_suffix_fsurdat:-false}
+pdaf_clm_suffix_finidat=${pdaf_clm_suffix_finidat:-false}
+pdaf_clm_suffix_paramfile=${pdaf_clm_suffix_paramfile:-false}
+
+python ${pdafnamelistgen_dir}/create_ensemble_namelists.py \
+   --num_ensemble ${num_ensemble} \
+   --backend ${pdaf_clm_backend} \
+   --forcings-dir ${pdaf_clm_forcings_dir} \
+   $( [[ "${pdaf_clm_suffix_fsurdat}" == "true" ]] && echo --suffix-fsurdat ) \
+   $( [[ "${pdaf_clm_suffix_finidat}" == "true" ]] && echo --suffix-finidat ) \
+   $( [[ "${pdaf_clm_suffix_paramfile}" == "true" ]] && echo --suffix-paramfile )
+
+fi # clm
+
+python ${pdafinputfilegen_dir}/adapt_enkfpf_par.py \
+   --pf-nprocs ${pfl_proc} \
+   --clm-nprocs ${clm_proc} \
+   --da-nreal ${num_ensemble}
+
+deactivate
+
+# tsmp-pdaf command line options (see PDAF/interface/framework/init_pdaf.F90 for defaults)
+pdaf_screen=${pdaf_screen:-2}
+pdaf_filtertype=${pdaf_filtertype:-2}
+pdaf_subtype=${pdaf_subtype:-0}
+pdaf_delt_obs=${pdaf_delt_obs:-2}
+pdaf_rms_obs=${pdaf_rms_obs:-0.5}
+pdaf_use_omi=${pdaf_use_omi:-false}
+pdaf_forget=${pdaf_forget:-1.0}
+pdaf_type_forget=${pdaf_type_forget:-0}
+pdaf_locweight=${pdaf_locweight:-0}
+pdaf_cradius=${pdaf_cradius:-0.0}
+pdaf_sradius=${pdaf_sradius:-${pdaf_cradius}}
+pdaf_obs_file=${pdaf_obs_file:-output.dat}
+
+pdaf_cmd_options="-n_modeltasks ${num_ensemble} -screen ${pdaf_screen} \
+-filtertype ${pdaf_filtertype} -subtype ${pdaf_subtype} \
+-delt_obs ${pdaf_delt_obs} -rms_obs ${pdaf_rms_obs} \
+-use_omi .${pdaf_use_omi}. -forget ${pdaf_forget} -type_forget ${pdaf_type_forget} \
+-locweight ${pdaf_locweight} -cradius ${pdaf_cradius} -sradius ${pdaf_sradius} \
+-obs_filename ${pdaf_obs_file}"
+
+fi # modelid == pdaf
+
+####
+## MPMD mapping file
+####
+
+# MPMD program-rank mapping file and run command for the coupled run (format depend on scheduler)
+if [[ "${scheduler}" == "pbs" || "${scheduler}" == "local" ]]; then
+    if [[ "${modelid}" != *pdaf* ]]; then
+      # Open MPI app-context file, ranks assigned per-line count (used with 'mpiexec --app')
+      if [[ "${modelid}" == *icon* ]]; then
+          echo "-np ${ico_proc} ./icon" >> ${sim_dir}/${mpmd_mapping_file}
+      fi
+      if [[ "${modelid}" == *eclm* ]]; then
+          echo "-np ${clm_proc} ./eclm" >> ${sim_dir}/${mpmd_mapping_file}
+      fi
+      if [[ "${modelid}" == *parflow* ]]; then
+          echo "-np ${pfl_proc} ./parflow ${EXP_ID}" >> ${sim_dir}/${mpmd_mapping_file}
+      fi
+    else
+      echo "-np ${tot_proc} ./tsmp-pdaf ${pdaf_cmd_options}" >> ${sim_dir}/${mpmd_mapping_file}
+    fi 
+else
+   # Slurm multi-prog rank-range mapping file (used with 'srun --multi-prog')
+   if [[ "${modelid}" != *pdaf* ]]; then
+      if [[ "${modelid}" == *icon* ]]; then
+         echo "0-__icon_pe__   ./icon" >> ${sim_dir}/${mpmd_mapping_file}
+      fi
+      if [[ "${modelid}" == *eclm* ]]; then
+         echo "__clm_ps__-__clm_pe__ ./eclm" >> ${sim_dir}/${mpmd_mapping_file}
+      fi
+      if [[ "${modelid}" == *parflow* ]]; then
+         echo "__pfl_ps__-__pfl_pe__ ./parflow ${EXP_ID}" >>  ${sim_dir}/${mpmd_mapping_file}
+      fi
+      sed -i "s/__icon_pe__/$(($ico_proc-1))/" ${sim_dir}/${mpmd_mapping_file}
+      sed -i "s/__clm_ps__/$(($ico_proc))/" ${sim_dir}/${mpmd_mapping_file}
+      sed -i "s/__clm_pe__/$(($ico_proc+$clm_proc-1))/" ${sim_dir}/${mpmd_mapping_file}
+      sed -i "s/__pfl_ps__/$(($ico_proc+$clm_proc))/" ${sim_dir}/${mpmd_mapping_file}
+      sed -i "s/__pfl_pe__/$(($ico_proc+$clm_proc+$pfl_proc-1))/" ${sim_dir}/${mpmd_mapping_file}
+   else
+      echo "0-$((tot_proc-1)) ./tsmp-pdaf ${pdaf_cmd_options}" >> ${sim_dir}/${mpmd_mapping_file}
+   fi
+fi
+
+#####
+## DEBUG MODE
+#####
 
 if ${debugmode}; then
 
