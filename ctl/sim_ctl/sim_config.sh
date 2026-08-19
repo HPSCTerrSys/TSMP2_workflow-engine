@@ -222,11 +222,11 @@ if [[ "${modelid}" == *parflow* ]]; then
   pfloutfrq=${pfloutfrq:-1.0}
   pfloutmfilt=${pfloutmfilt:-1}
   pfltsfilerst=${pfltsfilerst:-0}
-  pfllevaptrans=${pfllevaptrans:-false}
 
 # copy namelist
   [[ "$lreal" == "true" ]] && cp ${nml_dir}/parflow/ascii2pfb_slopes.tcl ascii2pfb_slopes.tcl
   [[ "$lreal" == "true" ]] && cp ${nml_dir}/parflow/ascii2pfb_SoilInd.tcl ascii2pfb_SoilInd.tcl
+  [[ "$lreal" == "true" ]] && cp ${nml_dir}/parflow/ascii2pfb_Porosity.tcl ascii2pfb_Porosity.tcl
   cp ${nml_dir}/parflow/coup_oas.tcl coup_oas.tcl
   ln -s ${fini_pfl} .
 
@@ -235,10 +235,8 @@ if [[ "${modelid}" == *parflow* ]]; then
   [[ "$lreal" == "true" ]] && cp ${geo_dir}/parflow/static/${pfl_mask} ${pfl_mask}
 
 # copy evaptrans file
-  if [[ "${run_oasis}" == "false" ]] && [[ "${pfllevaptrans}" == "true" ]]; then
-     cp ${frc_dir}/parflow/evaptrans/evaptrans_$(date -u -d "${startdate}" +%Y%m).nc evaptrans.nc
-     sed -i "s#__UseEvapTrans__#True#" coup_oas.tcl
-  fi # if evaptrans
+  [[ "${run_oasis}" == "false" ]] && cp ${frc_dir}/parflow/evaptrans/evaptrans.nc evaptrans.nc
+  [[ "${run_oasis}" == "false" ]] && sed -i "s#__UseEvapTrans__#True#" coup_oas.tcl
   [[ "${run_oasis}" == "true" ]] && sed -i "s#__UseEvapTrans__#False#" coup_oas.tcl
 
 # PFL NML
@@ -246,6 +244,8 @@ if [[ "${modelid}" == *parflow* ]]; then
   [[ "$lreal" == "true" ]] && sed -i "s/__nprocy_pfl_bldsva__/$pfl_procY/" ascii2pfb_slopes.tcl
   [[ "$lreal" == "true" ]] && sed -i "s/__nprocx_pfl_bldsva__/$pfl_procX/" ascii2pfb_SoilInd.tcl
   [[ "$lreal" == "true" ]] && sed -i "s/__nprocy_pfl_bldsva__/$pfl_procY/" ascii2pfb_SoilInd.tcl
+  [[ "$lreal" == "true" ]] && sed -i "s/__nprocx_pfl_bldsva__/$pfl_procX/" ascii2pfb_Porosity.tcl
+  [[ "$lreal" == "true" ]] && sed -i "s/__nprocy_pfl_bldsva__/$pfl_procY/" ascii2pfb_Porosity.tcl
   sed -i "s/__nprocx_pfl_bldsva__/$pfl_procX/" coup_oas.tcl
   sed -i "s/__nprocy_pfl_bldsva__/$pfl_procY/" coup_oas.tcl
   sed -i "s/__ngpflx_bldsva__/$pfl_ngx/" coup_oas.tcl
@@ -265,6 +265,7 @@ if [[ "${modelid}" == *parflow* ]]; then
   export PARFLOW_DIR=${tsmp2_install_dir}
   [[ "$lreal" == "true" ]] && tclsh ascii2pfb_slopes.tcl
   [[ "$lreal" == "true" ]] && tclsh ascii2pfb_SoilInd.tcl
+  [[ "$lreal" == "true" ]] && tclsh ascii2pfb_Porosity.tcl
 
 fi # if modelid == parflow
 
