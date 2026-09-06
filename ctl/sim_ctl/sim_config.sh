@@ -85,6 +85,7 @@ if [[ "${modelid}" == *icon* ]]; then
   icon_numprefetchproc=${icon_numprefetchproc:-1}
   domainfile_icon=${domainfile_icon:-europe011_DOM01.nc}
   icon_mapfile_lbc=${icon_mapfile_lbc:-dict.latbc}
+  fname_iconnml=${fname_iconnml:-NAMELIST_icon}
   [ "${icon_numrstprocs}" -eq 0 ] && icon_rstmode="sync" || icon_rstmode="dedicated procs multifile"
   # this method just works for simlength <= 1 month, ICON src changes needed
   [ "${#allow_overcast_yr[@]}" -eq 0 ] && allow_overcast_yr=( 0.917 0.884 0.909 0.951 0.976 0.951 0.951 0.951 0.917 0.901 0.901 0.909 )
@@ -105,7 +106,7 @@ if [[ "${modelid}" == *icon* ]]; then
   fi
 
 # copy namelist
-  cp ${nml_dir}/icon/NAMELIST_icon NAMELIST_icon
+  cp ${nml_dir}/icon/${fname_iconnml} NAMELIST_icon
   cp ${nml_dir}/icon/icon_master.namelist icon_master.namelist
   [[ "$lreal" == "true" ]] && cp ${nml_dir}/icon/map_file.ic map_file.ic
   [[ "$lreal" == "true" ]] && cp ${nml_dir}/icon/${icon_mapfile_lbc} ${icon_mapfile_lbc}
