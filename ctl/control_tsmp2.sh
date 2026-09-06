@@ -23,8 +23,9 @@ source ${ctl_dir}/utils_tsmp2.sh
 # Master-settings
 ###
 
-# load master conf
-parse_config_file "master.conf"
+# load master config file, optional input parameter
+MASTER_CONF=${1:-master.conf}
+parse_config_file "${MASTER_CONF}"
 
 # config file
 conf_file=${conf_file:-${ctl_dir}/expid.conf}
