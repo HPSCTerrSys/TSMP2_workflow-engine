@@ -86,6 +86,12 @@ if [[ "${modelid}" == *icon* ]]; then
   icon_numprefetchproc=${icon_numprefetchproc:-1}
   domainfile_icon=${domainfile_icon:-europe011_DOM01.nc}
   fname_iconghgforc=${fname_iconghgforc:-bc_greenhouse_rcp45_1765-2500.nc}
+  fname_iconkinne=${fname_iconkinne:-aerosoldata/EURO_R13B05_aeropt_kinne}
+  fname_iconsplumes=${fname_iconsplumes:-aerosoldata/MACv2.0-SP-merged-historical-and-SSP3-70_v1.nc}
+  fname_iconvolc=${fname_iconvolc:-aerosoldata/bc_aeropt_cmip6_volc_lw_b16_sw_b14}
+  fname_iconozone=${fname_iconozone:-bc_data/bc_ozone_ssp370}
+  fname_iconsolar=${fname_iconsolar:-swflux_14band_cmip6_1850-2299-v3.2.nc}
+  icon_kinne_bgyear=${icon_kinne_bgyear:-1850}
   icon_mapfile_lbc=${icon_mapfile_lbc:-dict.latbc}
   fname_iconnml=${fname_iconnml:-NAMELIST_icon}
   icon_initmode=${icon_initmode:-7}
@@ -154,6 +160,17 @@ if [[ "${modelid}" == *icon* ]]; then
   ln -sf ${geo_dir_icon}/${fname_iconextpar}
   ln -sf ${geo_dir_icon}/${fname_iconghgforc}
   ln -sf ${geo_dir_icon}/${ecraddata:-ecraddata}
+
+# link aerosol data, link names are fixed in ICON src
+  ln -sf ${geo_dir_icon}/${fname_iconkinne}_lw_b16_coa.nc bc_aeropt_kinne_lw_b16_coa.nc
+  ln -sf ${geo_dir_icon}/${fname_iconkinne}_sw_b14_coa.nc bc_aeropt_kinne_sw_b14_coa.nc
+  ln -sf ${geo_dir_icon}/${fname_iconkinne}_sw_b14_fin_${icon_kinne_bgyear}.nc bc_aeropt_kinne_sw_b14_fin.nc
+  ln -sf ${geo_dir_icon}/${fname_iconsplumes} MACv2.0-SP_v1.nc
+  ln -sf ${geo_dir_icon}/${fname_iconsolar} bc_solar_irradiance_sw_b14.nc
+  for yr in $(seq $(date -u -d "${startdate} -1 month" +%Y) $(date -u -d "${datep1}" +%Y)); do
+    ln -sf ${geo_dir_icon}/${fname_iconvolc}_${yr}.nc bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}.nc
+    ln -sf ${geo_dir_icon}/${fname_iconozone}_${yr}.nc bc_ozone_${yr}.nc
+  done
 
 fi # if modelid == ICON
 
