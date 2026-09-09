@@ -129,10 +129,16 @@ simlenmon=$(( (10#$(date -u -d "${datep1}" +%Y)-10#$(date -u -d "${startdate}" +
 dateymd=$(date -u -d "${startdate}" +%Y%m%d)
 dateshort=$(date -u -d "${startdate}" +%Y%m%d%H%M%S)
 
+# general control settings
+parse_config_file ${conf_file} "ctl_config_general"
+jobname_pre=${jobname_pre:-"${expid}_${caseid}pre_${dateymd}"}
+jobname_sim=${jobname_sim:-"${expid}_${caseid}sim_${dateymd}"}
+jobname_pos=${jobname_pos:-"${expid}_${caseid}pos_${dateymd}"}
+jobname_vis=${jobname_vis:-"${expid}_${caseid}vis_${dateymd}"}
+
 # set run path
-sim_dir=$(realpath ${ctl_dir}/../run/sim_${caseid}${modelid}_${dateymd}/)
-#sim_dir=$(realpath ${ctl_dir}/../run/${SYSTEMNAME}_${modelid}_${dateymd}/)
-pre_dir=$(realpath ${ctl_dir}/../run/pre_${caseid}${modelid}_${dateymd}/)
+sim_dir=${sim_dir:-$(realpath ${ctl_dir}/../run/sim_${caseid}${modelid}_${dateymd}/)}
+pre_dir=${pre_dir:-$(realpath ${ctl_dir}/../run/pre_${caseid}${modelid}_${dateymd}/)}
 
 echo "==="
 echo "Date: $dateshort"
@@ -145,7 +151,6 @@ echo "==="
 # check if any is true
 if [[ ${lpre[*]} =~ true ]]; then
 
-jobname_pre="${expid}_${caseid}pre_${dateshort}"
 jobprestring="${jobgenstring} $(sched_step_opts "${jobname_pre}" "${pre_wallclock}" 1 "${npnode}")"
 
 # Submit to pre.job
@@ -191,7 +196,6 @@ else
 fi # lpre
 
 #
-jobname_sim="${expid}_${caseid}sim_${dateshort}"
 jobsimstring="${jobgenstring} $(sched_step_opts "${jobname_sim}" "${sim_wallclock}" "${tot_node}" "${tot_proc}") \
               $(sched_dependency_opt "${dependencystring}")"
 
@@ -227,7 +231,6 @@ else
 fi
 
 # Configure TSMP2 Postprocessing
-jobname_pos="${expid}_${caseid}pos_${dateshort}"
 jobposstring="${jobgenstring} $(sched_step_opts "${jobname_pos}" "${pos_wallclock}" 1 "${npnode}") \
               $(sched_dependency_opt "${dependencystring}")"
 
@@ -255,7 +258,6 @@ else
 fi
 
 # Configure TSMP2 Postprocessing
-jobname_vis="${expid}_${caseid}vis_${dateshort}"
 jobvisstring="${jobgenstring} $(sched_step_opts "${jobname_vis}" "${vis_wallclock}" 1 "${npnode}") \
               $(sched_dependency_opt "${dependencystring}")"
 
