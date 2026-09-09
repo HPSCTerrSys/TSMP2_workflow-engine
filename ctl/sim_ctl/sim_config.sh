@@ -87,6 +87,14 @@ if [[ "${modelid}" == *icon* ]]; then
   domainfile_icon=${domainfile_icon:-europe011_DOM01.nc}
   icon_mapfile_lbc=${icon_mapfile_lbc:-dict.latbc}
   fname_iconnml=${fname_iconnml:-NAMELIST_icon}
+  icon_initmode=${icon_initmode:-7}
+  fname_dwdFG=${fname_dwdFG:-dwdFG_R13B05_DOM01.nc}
+  fname_ifs2icon=${fname_ifs2icon:-ifs2icon_R13B05_DOM01.nc}
+  case ${icon_initmode} in
+    2|3) fname_iconilnk=${fname_ifs2icon} ;;
+    *)   fname_iconilnk=${fname_dwdFG} ;;
+  esac
+  fname_iconini=${fname_iconini:-${icon_latbc_dir}/igaf$(date -u -d "${startdate}" +%Y%m%d%H).nc}
   [ "${icon_numrstprocs}" -eq 0 ] && icon_rstmode="sync" || icon_rstmode="dedicated procs multifile"
   # this method just works for simlength <= 1 month, ICON src changes needed
   [ "${#allow_overcast_yr[@]}" -eq 0 ] && allow_overcast_yr=( 0.917 0.884 0.909 0.951 0.976 0.951 0.951 0.951 0.917 0.901 0.901 0.909 )
@@ -133,9 +141,11 @@ if [[ "${modelid}" == *icon* ]]; then
   sed -i "s#__latbc_dir__#${icon_latbc_dir}#" NAMELIST_icon
   sed -i "s/__overcast__/${allow_overcast}/" NAMELIST_icon
   sed -i "s/__wrstmode__/${icon_rstmode}/" NAMELIST_icon
+  sed -i "s/__initmode__/${icon_initmode}/" NAMELIST_icon
 
 # link needed files
-  [[ "$lrestart" == "false" && "$lreal" == "true" ]] && ln -sf ${icon_latbc_dir}/igaf$(date -u -d "${startdate}" +%Y%m%d%H).nc ${fname_dwdFG}
+  [[ "$lrestart" == "false" && "$lreal" == "true" ]] && ln -sf ${fname_iconini} ${fname_iconilnk}
+  [[ "$lrestart" == "false" && "$lreal" == "true" && "${icon_initmode}" -eq 3 ]] && ln -sf ${fname_iconini_sfc} ${fname_dwdFG}
   [[ "$lrestart" == "true" ]] && ln -sf ${icon_rstfiles} ${fini_icon}
   ln -sf ${geo_dir_icon}/${fname_icondomain}
   ln -sf ${geo_dir_icon}/${fname_iconextpar}
