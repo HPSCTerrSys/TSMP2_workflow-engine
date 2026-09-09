@@ -77,6 +77,7 @@ if [[ "${modelid}" == *icon* ]]; then
   [[ "$lcpbin" == "true" ]] && cp $tsmp2_install_dir/bin/icon icon
 
   # set defaults
+  geo_dir_icon=${geo_dir_icon:-${geo_dir}/icon/static}
   icon_latbc_dir=${icon_latbc_dir:-${frc_dir}/icon/latbc/$(date -u -d "${startdate}" +%Y%m)}
   icon_restartdt=${icon_restartdt:-${simlensec}}
   nproma=${nproma:-12}
@@ -136,10 +137,10 @@ if [[ "${modelid}" == *icon* ]]; then
 # link needed files
   [[ "$lrestart" == "false" && "$lreal" == "true" ]] && ln -sf ${icon_latbc_dir}/igaf$(date -u -d "${startdate}" +%Y%m%d%H).nc ${fname_dwdFG}
   [[ "$lrestart" == "true" ]] && ln -sf ${icon_rstfiles} ${fini_icon}
-  ln -sf ${geo_dir}/icon/static/${fname_icondomain}
-  ln -sf ${geo_dir}/icon/static/${fname_iconextpar}
-  ln -sf ${geo_dir}/icon/static/${fname_iconghgforc}
-  ln -sf ${geo_dir}/icon/static/${ecraddata:-ecraddata}
+  ln -sf ${geo_dir_icon}/${fname_icondomain}
+  ln -sf ${geo_dir_icon}/${fname_iconextpar}
+  ln -sf ${geo_dir_icon}/${fname_iconghgforc}
+  ln -sf ${geo_dir_icon}/${ecraddata:-ecraddata}
 
 fi # if modelid == ICON
 
