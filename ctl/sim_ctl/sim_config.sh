@@ -85,6 +85,7 @@ if [[ "${modelid}" == *icon* ]]; then
   icon_numrstprocs=${icon_numrstprocs:-0}
   icon_numprefetchproc=${icon_numprefetchproc:-1}
   domainfile_icon=${domainfile_icon:-europe011_DOM01.nc}
+  fname_iconghgforc=${fname_iconghgforc:-bc_greenhouse_rcp45_1765-2500.nc}
   icon_mapfile_lbc=${icon_mapfile_lbc:-dict.latbc}
   fname_iconnml=${fname_iconnml:-NAMELIST_icon}
   icon_initmode=${icon_initmode:-7}
@@ -141,6 +142,8 @@ if [[ "${modelid}" == *icon* ]]; then
   sed -i "s#__latbc_dir__#${icon_latbc_dir}#" NAMELIST_icon
   sed -i "s/__overcast__/${allow_overcast}/" NAMELIST_icon
   sed -i "s/__wrstmode__/${icon_rstmode}/" NAMELIST_icon
+  sed -i "s#__ghgforc__#./${fname_iconghgforc##*/}#" NAMELIST_icon
+  sed -i "s#__extpar__#${fname_iconextpar##*/}#" NAMELIST_icon
   sed -i "s/__initmode__/${icon_initmode}/" NAMELIST_icon
 
 # link needed files
