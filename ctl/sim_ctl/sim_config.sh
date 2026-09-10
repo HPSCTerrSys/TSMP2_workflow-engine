@@ -94,6 +94,22 @@ if [[ "${modelid}" == *icon* ]]; then
   icon_kinne_bgyear=${icon_kinne_bgyear:-1850}
   icon_mapfile_lbc=${icon_mapfile_lbc:-dict.latbc}
   fname_iconnml=${fname_iconnml:-NAMELIST_icon}
+  fname_iconradgrid=${fname_iconradgrid:-}         # reduced radiation (parent) grid; empty = radiation on the full grid
+  fname_iconlatbcgrid=${fname_iconlatbcgrid:-}     # lateral boundary grid for frames LBC data; empty = LBC on the whole domain
+  # model time step [s, integer]; chunks starting before icon_spinup_end use icon_dtime_spinup
+  icon_dtime=${icon_dtime:-36}
+  icon_dtime_spinup=${icon_dtime_spinup:-}
+  icon_spinup_end=${icon_spinup_end:-}
+  icon_dtime_chunk=${icon_dtime}
+  if [[ -n "${icon_dtime_spinup}" && -n "${icon_spinup_end}" ]] && \
+     [[ "$(date -u -d "${startdate}" +%s)" -lt "$(date -u -d "${icon_spinup_end}" +%s)" ]]; then
+    icon_dtime_chunk=${icon_dtime_spinup}
+  fi
+  # physics call intervals keep fixed ratios to the time step, as in CEI195c
+  icon_dt_conv=$(( 2 * icon_dtime_chunk ))
+  icon_dt_rad=$(( 4 * icon_dtime_chunk ))
+  icon_dt_sso=$(( 4 * icon_dtime_chunk ))
+  icon_dt_gwd=$(( 4 * icon_dtime_chunk ))
   icon_initmode=${icon_initmode:-7}
   fname_dwdFG=${fname_dwdFG:-dwdFG_R13B05_DOM01.nc}
   fname_ifs2icon=${fname_ifs2icon:-ifs2icon_R13B05_DOM01.nc}
@@ -126,7 +142,7 @@ if [[ "${modelid}" == *icon* ]]; then
   cp ${nml_dir}/icon/icon_master.namelist icon_master.namelist
   [[ "$lreal" == "true" ]] && cp ${nml_dir}/icon/map_file.ic map_file.ic
   [[ "$lreal" == "true" ]] && cp ${nml_dir}/icon/${icon_mapfile_lbc} ${icon_mapfile_lbc}
-  [[ "$lreal" == "true" ]] && cp ${nml_dir}/icon/map_file.fc map_file.fc
+  [[ "$lreal" == "true" && -f ${nml_dir}/icon/map_file.fc ]] && cp ${nml_dir}/icon/map_file.fc map_file.fc
 
 # ICON NML
   sed -i "s/__simstart__/$(date -u -d "${inidate}" +%Y-%m-%dT%H:%M:%SZ)/" icon_master.namelist
@@ -151,6 +167,13 @@ if [[ "${modelid}" == *icon* ]]; then
   sed -i "s#__ghgforc__#./${fname_iconghgforc##*/}#" NAMELIST_icon
   sed -i "s#__extpar__#${fname_iconextpar##*/}#" NAMELIST_icon
   sed -i "s/__initmode__/${icon_initmode}/" NAMELIST_icon
+  sed -i "s#__radgridfile_icon__#${fname_iconradgrid}#" NAMELIST_icon
+  sed -i "s#__latbcgridfile_icon__#${fname_iconlatbcgrid}#" NAMELIST_icon
+  sed -i "s/__dtime__/${icon_dtime_chunk}/" NAMELIST_icon
+  sed -i "s/__dt_conv__/${icon_dt_conv}/" NAMELIST_icon
+  sed -i "s/__dt_rad__/${icon_dt_rad}/" NAMELIST_icon
+  sed -i "s/__dt_sso__/${icon_dt_sso}/" NAMELIST_icon
+  sed -i "s/__dt_gwd__/${icon_dt_gwd}/" NAMELIST_icon
 
 # link needed files
   [[ "$lrestart" == "false" && "$lreal" == "true" ]] && ln -sf ${fname_iconini} ${fname_iconilnk}
@@ -158,6 +181,8 @@ if [[ "${modelid}" == *icon* ]]; then
   [[ "$lrestart" == "true" ]] && ln -sf ${icon_rstfiles} ${fini_icon}
   ln -sf ${geo_dir_icon}/${fname_icondomain}
   ln -sf ${geo_dir_icon}/${fname_iconextpar}
+  [[ -n "${fname_iconradgrid}" ]] && ln -sf ${geo_dir_icon}/${fname_iconradgrid}
+  [[ -n "${fname_iconlatbcgrid}" ]] && ln -sf ${geo_dir_icon}/${fname_iconlatbcgrid}
   ln -sf ${geo_dir_icon}/${fname_iconghgforc}
   ln -sf ${geo_dir_icon}/${ecraddata:-ecraddata}
 
@@ -169,6 +194,8 @@ if [[ "${modelid}" == *icon* ]]; then
   ln -sf ${geo_dir_icon}/${fname_iconsolar} bc_solar_irradiance_sw_b14.nc
   for yr in $(seq $(date -u -d "${startdate} -1 month" +%Y) $(date -u -d "${datep1}" +%Y)); do
     ln -sf ${geo_dir_icon}/${fname_iconvolc}_${yr}.nc bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}.nc
+    # ICON 2026.04 reads the volcanic aerosol as bc_aeropt_volc_lw_b16_sw_b14_<yr>.nc (mo_bc_aeropt_volc.f90)
+    ln -sf ${geo_dir_icon}/${fname_iconvolc}_${yr}.nc bc_aeropt_volc_lw_b16_sw_b14_${yr}.nc
     ln -sf ${geo_dir_icon}/${fname_iconozone}_${yr}.nc bc_ozone_${yr}.nc
   done
 
