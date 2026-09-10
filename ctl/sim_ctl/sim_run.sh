@@ -14,6 +14,10 @@ fi
 cd $CASE_DIR
 source $LOADENVS
 
+# threads per MPI rank (after the env file, whose module purge must not undo it); default: pure MPI
+export OMP_NUM_THREADS=${omp_num_threads:-1}
+export MKL_NUM_THREADS=${OMP_NUM_THREADS}
+
 if [[ "${modelid}" == *clm* ]]; then
 
 # Set PIO log files
