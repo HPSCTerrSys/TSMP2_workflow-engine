@@ -21,7 +21,24 @@ file_op() {
     fi
 }
 
+# simulation status: failed if the model launch returned non-zero or, for ICON,
+# if finish.status is missing (ICON writes OK or RESTART there only at a clean end)
+sim_status=ok
+if [[ "${sim_rc:-0}" -ne 0 ]]; then sim_status=failed; fi
+if [[ "${modelid}" == *icon* ]] && ! grep -qsE "OK|RESTART" ${sim_dir}/finish.status; then
+  sim_status=failed
+fi
+echo "Simulation status: ${sim_status} (model exit code: ${sim_rc:-not recorded})"
+if [[ "${sim_status}" == "failed" ]]; then
+  file_op_mode=copy # keep the run directory complete for debugging
+  sim_exit=1        # sim.job exits non-zero, so the next chunk does not start
+fi
+
 simout_dir=${out_dir}/${caseid}${modelid}_${dateymd}
+# a failed run gets its own marked directory and never takes the place of a good one
+if [[ "${sim_status}" == "failed" ]]; then
+  simout_dir=${simout_dir}_failed_${job_id}
+fi
 simrst_dir=${rst_dir}/${caseid}${dateymd}
 
 # create a new simulation output directory
@@ -34,6 +51,17 @@ echo "Moving model output to simout and storing restart files"
 
 mkdir -p "${simout_dir}/log" "${simout_dir}/nml" "${simout_dir}/rst" "${simout_dir}/bin"
 
+# mark a failed run
+if [[ "${sim_status}" == "failed" ]]; then
+  { echo "status:        failed"
+    echo "job id:        ${job_id}"
+    echo "exit code:     ${sim_rc:-not recorded}"
+    echo "finish.status: $(cat ${sim_dir}/finish.status 2>/dev/null || echo missing)"
+    echo "run directory: ${sim_dir} (kept)"
+    echo "written:       $(date '+%Y-%m-%dT%H:%M:%S')"
+  } > ${simout_dir}/SIM_FAILED
+fi
+
 file_op ${tsmp2_env} ${simout_dir}/bin/
 
 if [[ "${MODEL_ID}" == *-* ]]; then
@@ -41,9 +69,9 @@ if [[ "${MODEL_ID}" == *-* ]]; then
 fi # MODEL_ID oasis
 
 if [[ "${modelid}" == *icon* ]]; then
-  # Namelist
-  file_op ${sim_dir}/NAMELIST_icon ${simout_dir}/nml/
-  file_op ${sim_dir}/icon_master.namelist ${simout_dir}/nml/
+  # Namelists: all of them, including ICON's own dump (NAMELIST_ICON_output_atm) and the name maps
+  file_op ${sim_dir}/NAMELIST_* ${sim_dir}/*.namelist ${simout_dir}/nml/
+  file_op ${sim_dir}/map_file.* ${sim_dir}/dict.* ${simout_dir}/nml/
 
   # Model output
   mkdir -p ${simout_dir}/out/icon
@@ -52,11 +80,19 @@ if [[ "${modelid}" == *icon* ]]; then
   # Model log
   file_op ${sim_dir}/nml.atmo.log ${simout_dir}/log/
   file_op ${sim_dir}/*.dat ${simout_dir}/log/
+  [ -e ${sim_dir}/finish.status ] && file_op ${sim_dir}/finish.status ${simout_dir}/log/
+  ls ${sim_dir}/METEOGRAM_* >/dev/null 2>&1 && file_op ${sim_dir}/METEOGRAM_* ${simout_dir}/out/icon
 
-  # Restart
-  mkdir -p ${simout_dir}/rst/icon ${simrst_dir}/icon
-  file_op ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simout_dir}/rst/icon
-  file_op ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simrst_dir}/icon # save twice as simout is archived
+  # Restart: only from a run that ended cleanly. A restart directory left by an
+  # earlier run of the same chunk is kept as a backup, not overwritten.
+  if [[ "${sim_status}" == "ok" ]]; then
+    if [ -e "${simrst_dir}/icon" ]; then
+      mv ${simrst_dir}/icon ${simrst_dir}/icon_bku$(date '+%Y%m%d%H%M%S')
+    fi
+    mkdir -p ${simout_dir}/rst/icon ${simrst_dir}/icon
+    file_op ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simout_dir}/rst/icon
+    file_op ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simrst_dir}/icon # save twice as simout is archived
+  fi
 
   # copy binary
   file_op icon ${simout_dir}/bin/
@@ -131,7 +167,13 @@ case "${scheduler}" in
   *)     echo $(scontrol show job ${job_id}) > ${simout_dir}/log/job_info.log ;;
 esac
 
-# remove run directory
-rm -rf ${sim_dir:?}
+# remove the run directory only after a clean run (and unless keep_rundir=true);
+# a failed run keeps it for debugging, and the next sim_config of the same chunk
+# moves it aside as _bku
+if [[ "${sim_status}" == "ok" && "${keep_rundir:-false}" != "true" ]]; then
+  rm -rf ${sim_dir:?}
+else
+  echo "Run directory kept: ${sim_dir}"
+fi
 
 } # sim_cleanup

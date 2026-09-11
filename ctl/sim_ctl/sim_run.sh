@@ -52,9 +52,10 @@ fi # parflow
 # Run model
 TIME_START=$(date +%s)
 echo ">>> ${modelid} started at $(date +%H:%M:%S)"
-${mpmd_run_cmd} ${mpmd_mapping_file}
+sim_rc=0 # model exit code, evaluated by sim_cleanup
+${mpmd_run_cmd} ${mpmd_mapping_file} || sim_rc=$?
 TIME_END=$(date +%s)
-echo ">>> ${modelid} finished at $(date +%H:%M:%S)"
+echo ">>> ${modelid} finished at $(date +%H:%M:%S), exit code ${sim_rc}"
 echo ">>> ${modelid} runtime: $(date -u -d "0 $TIME_END sec - $TIME_START sec" +"%H:%M:%S")"
 
 } # sim_run

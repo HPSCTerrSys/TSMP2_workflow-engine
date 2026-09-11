@@ -65,4 +65,6 @@ fi # cleanup
 timeend=$(date +%s)
 logging_job_status "sim"
 
-exit 0
+# non-zero if sim_cleanup found the simulation failed, so that the next chunk
+# (dependency afterok) does not start from a failed or stale state
+exit ${sim_exit:-0}
