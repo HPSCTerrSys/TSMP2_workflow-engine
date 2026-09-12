@@ -21,6 +21,21 @@ file_op() {
     fi
 }
 
+# Large files that are genuinely in the run directory (model output, and the second
+# leg of the restart, which is written twice on purpose) are moved rather than copied:
+# the run directory and the data directories are on the same filesystem, so a move is
+# a rename, while a copy reads and writes every byte. Set bulk_file_op_mode=copy in
+# [sim_clean_general] to fall back to whatever file_op_mode says.
+bulk_file_op_mode=${bulk_file_op_mode:-"move"}
+
+bulk_op() {
+    if [ "$bulk_file_op_mode" = "move" ]; then
+        mv -v "$@"
+    else
+        file_op "$@"
+    fi
+}
+
 # simulation status: failed if the model launch returned non-zero or, for ICON,
 # if finish.status is missing (ICON writes OK or RESTART there only at a clean end)
 sim_status=ok
@@ -30,8 +45,9 @@ if [[ "${modelid}" == *icon* ]] && ! grep -qsE "OK|RESTART" ${sim_dir}/finish.st
 fi
 echo "Simulation status: ${sim_status} (model exit code: ${sim_rc:-not recorded})"
 if [[ "${sim_status}" == "failed" ]]; then
-  file_op_mode=copy # keep the run directory complete for debugging
-  sim_exit=1        # sim.job exits non-zero, so the next chunk does not start
+  file_op_mode=copy      # keep the run directory complete for debugging
+  bulk_file_op_mode=copy # likewise for the large files
+  sim_exit=1             # sim.job exits non-zero, so the next chunk does not start
 fi
 
 simout_dir=${out_dir}/${caseid}${modelid}_${dateymd}
@@ -62,7 +78,7 @@ if [[ "${sim_status}" == "failed" ]]; then
   } > ${simout_dir}/SIM_FAILED
 fi
 
-file_op ${tsmp2_env} ${simout_dir}/bin/
+cp -v ${tsmp2_env} ${simout_dir}/bin/ # always a copy: this one lives in the install directory, not in the run directory
 
 if [[ "${MODEL_ID}" == *-* ]]; then
   file_op ${sim_dir}/namcouple ${simout_dir}/nml/
@@ -73,9 +89,9 @@ if [[ "${modelid}" == *icon* ]]; then
   file_op ${sim_dir}/NAMELIST_* ${sim_dir}/*.namelist ${simout_dir}/nml/
   file_op ${sim_dir}/map_file.* ${sim_dir}/dict.* ${simout_dir}/nml/
 
-  # Model output
+  # Model output: the bulk of the data, moved rather than copied (see bulk_op)
   mkdir -p ${simout_dir}/out/icon
-  file_op ${sim_dir}/ICON_out_* ${simout_dir}/out/icon
+  bulk_op ${sim_dir}/ICON_out_* ${simout_dir}/out/icon
 
   # Model log
   file_op ${sim_dir}/nml.atmo.log ${simout_dir}/log/
@@ -90,8 +106,10 @@ if [[ "${modelid}" == *icon* ]]; then
       mv ${simrst_dir}/icon ${simrst_dir}/icon_bku$(date '+%Y%m%d%H%M%S')
     fi
     mkdir -p ${simout_dir}/rst/icon ${simrst_dir}/icon
-    file_op ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simout_dir}/rst/icon
-    file_op ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simrst_dir}/icon # save twice as simout is archived
+    # saved twice on purpose, as simout is archived: copy first, then move the
+    # originals, so both land regardless of the file operation mode
+    cp -v   ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simout_dir}/rst/icon
+    bulk_op ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simrst_dir}/icon
   fi
 
   # copy binary
