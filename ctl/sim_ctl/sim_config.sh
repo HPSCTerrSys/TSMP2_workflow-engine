@@ -94,6 +94,10 @@ if [[ "${modelid}" == *icon* ]]; then
   icon_kinne_bgyear=${icon_kinne_bgyear:-1850}
   icon_mapfile_lbc=${icon_mapfile_lbc:-dict.latbc}
   fname_iconnml=${fname_iconnml:-NAMELIST_icon}
+  # directory holding the ICON namelists and the name dictionaries; the default is the nml/icon
+  # submodule, an alternative directory can be set in expid.conf (e.g. one filled with symlinks
+  # to a configuration repository)
+  icon_nml_dir=${icon_nml_dir:-${nml_dir}/icon}
   fname_iconradgrid=${fname_iconradgrid:-}         # reduced radiation (parent) grid; empty = radiation on the full grid
   fname_iconlatbcgrid=${fname_iconlatbcgrid:-}     # lateral boundary grid for frames LBC data; empty = LBC on the whole domain
   # model time step [s, integer]; chunks starting before icon_spinup_end use icon_dtime_spinup
@@ -138,11 +142,11 @@ if [[ "${modelid}" == *icon* ]]; then
   fi
 
 # copy namelist
-  cp ${nml_dir}/icon/${fname_iconnml} NAMELIST_icon
-  cp ${nml_dir}/icon/icon_master.namelist icon_master.namelist
-  [[ "$lreal" == "true" ]] && cp ${nml_dir}/icon/map_file.ic map_file.ic
-  [[ "$lreal" == "true" ]] && cp ${nml_dir}/icon/${icon_mapfile_lbc} ${icon_mapfile_lbc}
-  [[ "$lreal" == "true" && -f ${nml_dir}/icon/map_file.fc ]] && cp ${nml_dir}/icon/map_file.fc map_file.fc
+  cp ${icon_nml_dir}/${fname_iconnml} NAMELIST_icon
+  cp ${icon_nml_dir}/icon_master.namelist icon_master.namelist
+  [[ "$lreal" == "true" ]] && cp ${icon_nml_dir}/map_file.ic map_file.ic
+  [[ "$lreal" == "true" ]] && cp ${icon_nml_dir}/${icon_mapfile_lbc} ${icon_mapfile_lbc}
+  [[ "$lreal" == "true" && -f ${icon_nml_dir}/map_file.fc ]] && cp ${icon_nml_dir}/map_file.fc map_file.fc
 
 # ICON NML
   sed -i "s/__simstart__/$(date -u -d "${inidate}" +%Y-%m-%dT%H:%M:%SZ)/" icon_master.namelist
