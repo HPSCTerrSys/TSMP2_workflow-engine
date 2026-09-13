@@ -234,9 +234,13 @@ fi
 jobposstring="${jobgenstring} $(sched_step_opts "${jobname_pos}" "${pos_wallclock}" 1 "${npnode}") \
               $(sched_dependency_opt "${dependencystring}")"
 
-# Submit to pos.job
-submit_pos=$(sched_submit "${jobname_pos}" "${jobposstring}" "${ctl_dir}/pos_ctl/pos.job")
-echo $submit_pos" for postprocessing"
+# Submit to pos.job (not in debugmode: a dry run submits nothing)
+if (! ${debugmode}) ; then
+  submit_pos=$(sched_submit "${jobname_pos}" "${jobposstring}" "${ctl_dir}/pos_ctl/pos.job")
+  echo $submit_pos" for postprocessing"
+else
+  echo "debugmode: postprocessing job not submitted"
+fi
 
 # get jobid
 pos_id=$(sched_parse_jobid "$submit_pos")
@@ -261,9 +265,13 @@ fi
 jobvisstring="${jobgenstring} $(sched_step_opts "${jobname_vis}" "${vis_wallclock}" 1 "${npnode}") \
               $(sched_dependency_opt "${dependencystring}")"
 
-# Submit to vis.job
-submit_vis=$(sched_submit "${jobname_vis}" "${jobvisstring}" "${ctl_dir}/vis_ctl/vis.job")
-echo $submit_vis" for visualization"
+# Submit to vis.job (not in debugmode: a dry run submits nothing)
+if (! ${debugmode}) ; then
+  submit_vis=$(sched_submit "${jobname_vis}" "${jobvisstring}" "${ctl_dir}/vis_ctl/vis.job")
+  echo $submit_vis" for visualization"
+else
+  echo "debugmode: visualization job not submitted"
+fi
 
 # get jobid
 vis_id=$(sched_parse_jobid "$submit_vis")
