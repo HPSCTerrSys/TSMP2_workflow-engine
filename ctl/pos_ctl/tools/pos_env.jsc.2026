@@ -1,0 +1,20 @@
+# Post-processing environment: CDO, NCO, netCDF tools, Python with xarray/pandas (for SPICE's
+# correct_cf.py), ncview. JURECA-DC / JUWELS / JUPITER, Stage 2026, GCC + OpenMPI (foss) toolchain.
+#
+# OpenMPI rather than ParaStationMPI because CDO and NCO are only built against foss/gompi.
+# Usage: source pos_env.jsc.2026   (sourced by ctl/pos_ctl/pos.job)
+
+module --force purge
+module use $OTHERSTAGES
+module load Stages/2026 StdEnv/2026 GCC/14.3.0 OpenMPI >/dev/null 2>&1
+module load SciPy-Stack/2025b >/dev/null 2>&1
+module load netcdf4-python/1.7.2 >/dev/null 2>&1
+module load CDO/2.5.4 >/dev/null 2>&1
+module load NCO/5.3.6 >/dev/null 2>&1
+module load ncview/2.1.11 >/dev/null 2>&1
+
+# fail early if a tool is missing (the module loads above are silenced)
+for _tool in cdo ncks ncatted ncrename ncwa ncap2 ncdump nccopy python3; do
+  command -v ${_tool} >/dev/null || { echo "ERROR: ${_tool} not found after loading the post-processing environment"; return 1; }
+done
+unset _tool

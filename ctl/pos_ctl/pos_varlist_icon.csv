@@ -1,0 +1,18 @@
+# Post-processing variable table for ICON: SPICE-compatible monthly post files (one variable per file).
+# pkp006 (PG KICS cycle-2026 initial tests): only the four deliverables PMSL, TOT_PREC, T_2M, SP300p.
+#
+# name       post file name <name>_ts.nc (SPICE / COSMO style)
+# icon_name  variable name in the ICON output ("-" for derived quantities)
+# stream     ICON output stream, as in ICON_out_<expid>_<stream>_<date>.nc
+# hout_inc   output interval of the stream, HH:MM:SS (SPICE correct_cf.py: width of time_bnds)
+# operation  output_nml operation of the stream: - | mean | max | min
+# level      pressure level in hPa, or "-"
+# role       deliver: final post file | intermediate: input of a derived file, removed afterwards |
+#            derived:<recipe>: computed from other post files (recipe sp = wind speed from U/V)
+name,icon_name,stream,hout_inc,operation,level,role
+PMSL,pres_msl,1h_2d,01:00:00,-,-,deliver
+T_2M,t_2m,1h_2d,01:00:00,-,-,deliver
+TOT_PREC,tot_prec,1h_acc,01:00:00,-,-,deliver
+U300p,u,1h_pl300,01:00:00,-,300,intermediate
+V300p,v,1h_pl300,01:00:00,-,300,intermediate
+SP300p,-,-,01:00:00,-,300,derived:sp

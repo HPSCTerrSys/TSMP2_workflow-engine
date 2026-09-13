@@ -8,4 +8,5 @@ nml/icon_pkp006/
 # data directories
 dta/restart
 dta/simres
+dta/postpro
 dta/forcing

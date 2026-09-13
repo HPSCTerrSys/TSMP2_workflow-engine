@@ -20,7 +20,7 @@ IFS=' ' read -r -a lvis <<< "$lvisstr"
 # source environment
 ###
 timestart=$(date +%s)
-source ${tsmp2_env} # should be changed to post-processing env.
+source ${pos_env:-${ctl_dir}/pos_ctl/tools/pos_env.jsc.2026} # post-processing env (CDO, NCO, Python), not the model build env
 
 ###
 # Start config, run, cleanup
