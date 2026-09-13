@@ -136,7 +136,7 @@ else
 fi
 
 # --- 6. global attributes (SPICE iconcor) ---------------------------------------------------------
-ncatted -h -a institution,global,d,, -a param,global,d,, \
+ncatted -h -a institution,,d,, -a param,,d,, \
   -a title,global,o,c,"${pos_ga_title}" \
   -a institution,global,o,c,"${pos_ga_institution}" \
   -a project_id,global,o,c,"${pos_ga_project_id}" \

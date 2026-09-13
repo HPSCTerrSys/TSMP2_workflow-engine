@@ -21,7 +21,9 @@ source ${ctl_dir}/pos_ctl/tools/pos_env.jsc.2026 >/dev/null 2>&1
 ( module load Cartopy/0.25.0 >/dev/null 2>&1; python3 ${here}/make_synthetic.py ${root} )
 
 # the variables control_tsmp2.sh would export, for a one-day chunk
-conf_file=${ctl_dir}/expid.conf; modelid=icon; expid=pkp006; EXP_ID=pkp006; mailaddress=""
+# an empty experiment config: the real expid.conf may point pos_simres at real model output
+conf_file=${root}/expid_test.conf; : > ${conf_file}
+modelid=icon; expid=pkp006; EXP_ID=pkp006; mailaddress=""
 startdate=2001-12-01T00:00Z; datep1=2001-12-02; out_dir=${root}/dta/simres; geo_dir=${root}/geo
 export pos_out=${root}/postpro/icon pos_target_grid=${root}/target_latlon_rotated.nc pos_partial=true
 export pos_correct_cf=${spice}/src/python_util/correct_cf.py pos_mapping_csv=${spice}/data/csv/mapping_to_cosmo.3km.csv
@@ -55,7 +57,9 @@ for fname, var, expect, coords in cases:
         'fill -1e20': np.isclose(d[var]._FillValue, -1e20),
         'coordinates': d[var].coordinates == coords,
         'lon_bnds': 'lon_bnds' in d.variables,
-        'rotated_pole': 'rotated_pole' in d.variables,
+        'rotated_pole with pole': 'rotated_pole' in d.variables
+                                  and getattr(d['rotated_pole'], 'grid_north_pole_latitude', None) == 39.25,
+        'no ICON param attribute': not hasattr(d[var], 'param'),
         'deflate+shuffle': bool(d[var].filters().get('zlib')) and bool(d[var].filters().get('shuffle')),
         'bounds only for sums': ('time_bnds' in d.variables) == (fname == 'TOT_PREC'),
     }

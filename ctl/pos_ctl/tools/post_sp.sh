@@ -25,8 +25,7 @@ cdo -s -f nc4 expr,'SP=(U^2+V^2)^0.5;' uv.nc sp.nc
 cdo -s setmissval,-1.E20 sp.nc sp1.nc && mv sp1.nc sp.nc
 coords=$(ncdump -h uv.nc | sed -nE 's/^\s+U:coordinates = "(.*)" ;/\1/p')
 ncatted -h -a coordinates,SP,o,c,"${coords}" sp.nc
-copy=$(echo ${coords} | tr ' ' ',')
-if ! grep -qE '^\s+\w+ rotated_pole' <<< "$(ncdump -h sp.nc)"; then copy=${copy},rotated_pole; fi
+copy=$(echo ${coords} | tr ' ' ','),rotated_pole   # always: cdo expr writes rotated_pole without the pole parameters
 if grep -qE '^\s+\w+ lon_bnds\(' <<< "$(ncdump -h uv.nc)"; then copy=${copy},lon_bnds,lat_bnds; fi
 ncks -h -A -C -v ${copy} uv.nc sp.nc
 
