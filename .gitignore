@@ -3,6 +3,8 @@ ctl/logs
 ctl/job_status.log
 # run directories
 run/
+# ICON namelists: symlinks into the PG KICS common repo, created by the linker script
+nml/icon_pkp006/
 # data directories
 dta/restart
 dta/simres
