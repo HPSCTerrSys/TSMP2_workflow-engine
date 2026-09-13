@@ -39,6 +39,9 @@ if [[ "${scheduler}" == "pbs" || "${scheduler}" == "local" ]]; then
    fi
 else
    # Slurm multi-prog rank-range mapping file (used with 'srun --multi-prog')
+   # NOTE (pkp006, O34): on JURECA, 'srun --multi-prog' is reported to time out above 64 nodes
+   # (JSC known issues, 2026-01-14). Unlikely to be reached here - the 3 km domain runs at 16-32
+   # nodes - but a run beyond 64 nodes would need a plain srun with a SLURM_LOCALID wrapper.
    mpmd_mapping_file=slm_multiprog_mapping.conf
    mpmd_run_cmd="srun --multi-prog"
    if [[ "${modelid}" == *icon* ]]; then
