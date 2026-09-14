@@ -9,7 +9,8 @@
 #
 # Environment (set by pos_config.sh):
 #   pos_simres     directory holding the chunk result directories (dta/simres), searched as
-#                  icon_*/out/icon/ICON_out_<expid>_<stream>_<YYYYMMDD>...nc, *_bku* excluded
+#                  icon_*/out/icon/ICON_out_<expid>_<stream>_<YYYYMMDD>...nc[_part_<n>+], *_bku* excluded
+#                  (after a restart ICON appends _part_<n>+ to each stream's first file of the chunk)
 #   pos_out        post-processing directory with icon_grid.nc and remapnn_weights.nc
 #   pos_tmp        scratch directory for temporary files
 #   pos_target_grid, pos_mapping_csv, pos_correct_cf, expid
@@ -36,7 +37,7 @@ files=()
 while IFS= read -r f; do
   fdate=$(basename ${f} | sed -E "s/^ICON_out_${expid}_${stream}_([0-9]{8})T.*/\1/")
   if [[ ${fdate} -ge ${d0} && ${fdate} -le ${d1} ]]; then files+=("${f}"); fi
-done < <(ls -1 ${pos_simres}/icon_*/out/icon/ICON_out_${expid}_${stream}_[0-9]*T[0-9]*Z*.nc 2>/dev/null \
+done < <(ls -1 ${pos_simres}/icon_*/out/icon/ICON_out_${expid}_${stream}_[0-9]*T[0-9]*Z*.nc* 2>/dev/null \
          | grep -v '_bku' | sort -t_ -k1,1 || true)
 if [[ ${#files[@]} -eq 0 ]]; then
   echo "ERROR post_one ${name}: no ICON_out_${expid}_${stream}_*.nc between ${d0} and ${d1} in ${pos_simres}" >&2
