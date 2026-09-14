@@ -10,7 +10,8 @@
 # Environment (set by pos_config.sh):
 #   pos_simres     directory holding the chunk result directories (dta/simres), searched as
 #                  icon_*/out/icon/ICON_out_<expid>_<stream>_<YYYYMMDD>...nc[_part_<n>+], *_bku* excluded
-#                  (after a restart ICON appends _part_<n>+ to each stream's first file of the chunk)
+#                  (after a restart ICON logs "Modify filename ... _part_<n>+" for each stream's first
+#                  file, but 2026.04 keeps the plain name, F38; the pattern accepts both)
 #   pos_out        post-processing directory with icon_grid.nc and remapnn_weights.nc
 #   pos_tmp        scratch directory for temporary files
 #   pos_target_grid, pos_mapping_csv, pos_correct_cf, expid
