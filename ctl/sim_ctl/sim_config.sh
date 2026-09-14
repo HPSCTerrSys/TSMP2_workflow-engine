@@ -169,6 +169,9 @@ if [[ "${modelid}" == *icon* ]]; then
   sed -i "s/__outname__/ICON_out_${expid}/" NAMELIST_icon
   sed -i "s/__restartname__/${expid}_restart_\<mtype\>_\<rsttime\>.nc/" NAMELIST_icon
   sed -i "s#__latbc_dir__#${icon_latbc_dir}#" NAMELIST_icon
+  # root of the per-month forcing directories, for file patterns that pick the month
+  # themselves (e.g. LOWBC_<year>_<month>: a chunk end at 00 UTC on the 1st needs the next month)
+  sed -i "s#__latbc_root__#$(dirname ${icon_latbc_dir})#" NAMELIST_icon
   sed -i "s/__overcast__/${allow_overcast}/" NAMELIST_icon
   sed -i "s/__wrstmode__/${icon_rstmode}/" NAMELIST_icon
   sed -i "s#__ghgforc__#./${fname_iconghgforc##*/}#" NAMELIST_icon
