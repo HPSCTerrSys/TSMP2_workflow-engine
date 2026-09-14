@@ -21,8 +21,8 @@ file_op() {
     fi
 }
 
-# Large files that are genuinely in the run directory (model output, and the second
-# leg of the restart, which is written twice on purpose) are moved rather than copied:
+# Large files that are genuinely in the run directory (model output, and the ICON
+# restart, which goes to simout with only a link in the restart directory) are moved rather than copied:
 # the run directory and the data directories are on the same filesystem, so a move is
 # a rename, while a copy reads and writes every byte. Set bulk_file_op_mode=copy in
 # [sim_clean_general] to fall back to whatever file_op_mode says.
@@ -106,10 +106,11 @@ if [[ "${modelid}" == *icon* ]]; then
       mv ${simrst_dir}/icon ${simrst_dir}/icon_bku$(date '+%Y%m%d%H%M%S')
     fi
     mkdir -p ${simout_dir}/rst/icon ${simrst_dir}/icon
-    # saved twice on purpose, as simout is archived: copy first, then move the
-    # originals, so both land regardless of the file operation mode
-    cp -v   ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simout_dir}/rst/icon
-    bulk_op ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simrst_dir}/icon
+    # archive strategy (pkp006): the restart stays with its simulation (output, logs,
+    # namelists) in simout; the restart directory holds only a symbolic link to it,
+    # which the next chunk follows (sim_config.sh)
+    bulk_op ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simout_dir}/rst/icon
+    ln -sv  ${simout_dir}/rst/icon/${expid}_restart_ATMO_*.nc  ${simrst_dir}/icon/
   fi
 
   # copy binary
