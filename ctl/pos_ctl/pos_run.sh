@@ -4,6 +4,28 @@
 #
 # ICON: for every month, all table lines with role deliver/intermediate in parallel (post_one.sh),
 # then the derived ones (post_sp.sh). Logs: ${pos_tmp}/<YYYY_MM>/<name>.log with <name>.rc.
+#
+# A variable that succeeded has the benign HDF5 probe block dropped from its log (drop_hdf5_probe):
+# some tool in the chain asks whether a file that does not exist yet is an HDF5 file, and HDF5 prints
+# a ten-line error block for it. It looks like a failure in an archived log but is not one -- such a
+# block always contains "errno = 2 ... No such file or directory". A variable that FAILED keeps its
+# log exactly as written, so nothing is ever hidden from a real problem.
+
+# drop_hdf5_probe <logfile> -- remove HDF5-DIAG blocks caused by probing a non-existent file
+drop_hdf5_probe(){
+  local f=$1
+  [[ -s ${f} ]] || return 0
+  grep -q "errno = 2" ${f} 2>/dev/null || return 0
+  awk '
+    /^HDF5-DIAG:/                           { if (inblk && !benign) print blk
+                                              inblk=1; blk=$0; benign=0; next }
+    inblk && /^(  #|    major:|    minor:)/ { blk=blk ORS $0
+                                              if ($0 ~ /errno = 2/) benign=1; next }
+    inblk                                   { if (!benign) print blk; inblk=0; print; next }
+                                            { print }
+    END                                     { if (inblk && !benign) print blk }
+  ' ${f} > ${f}.tmp$$ && command mv ${f}.tmp$$ ${f}
+}
 
 pos_run(){
 
@@ -63,6 +85,7 @@ for month in ${pos_monthstr}; do
       echo "FAILED  $(basename ${rc} .rc) -- see ${rc%.rc}.log"
       pos_run_failed=1
     else
+      drop_hdf5_probe "${rc%.rc}.log"
       echo "ok      $(basename ${rc} .rc)"
     fi
   done

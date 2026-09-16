@@ -6,6 +6,12 @@
 # the variable list, the job info and the job logs are stored with the post files in
 # <pos_out>/<YYYY_MM>/log/. If all is well the temporary directory is removed; otherwise it is kept
 # as well. The model output in dta/simres is never touched here.
+#
+# One job can process several months (a catch-up run), and then the job-level files -- job_info.log
+# and the job's own .out/.err -- are necessarily the same in every month's log folder and describe
+# all of them. They are copied into each month all the same, so that a month directory stays
+# self-contained when it is archived on its own. README_job_scope says which months the job covered,
+# so the duplication is never ambiguous.
 
 pos_cleanup(){
 
@@ -52,6 +58,14 @@ for month in ${pos_monthstr}; do
   mkdir -p ${pos_out}/${month}/log
   cp -p ${pos_tmp}/${month}/*.log ${pos_tmp}/${month}/*.rc ${pos_out}/${month}/log/ 2>/dev/null
   cp -p ${pos_varlist} ${pos_out}/${month}/log/
+  { echo "job:            ${job_name} (id ${job_id})"
+    echo "months in job:  ${pos_monthstr}"
+    echo "this directory: ${month}"
+    echo
+    echo "The per-variable *.log and *.rc files above are this month's own."
+    echo "job_info.log and the job's .out/.err are job-level: identical in every month this"
+    echo "job processed, and reporting all of them."
+  } > ${pos_out}/${month}/log/README_job_scope
   case "${scheduler:-slurm}" in
     pbs) qstat -f ${job_id} > ${pos_out}/${month}/log/job_info.log 2>&1
          cp -p ${log_dir}/${job_name}.{e,o}${job_id} ${pos_out}/${month}/log/ 2>/dev/null ;;
