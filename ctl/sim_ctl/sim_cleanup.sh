@@ -99,18 +99,20 @@ if [[ "${modelid}" == *icon* ]]; then
   [ -e ${sim_dir}/finish.status ] && file_op ${sim_dir}/finish.status ${simout_dir}/log/
   ls ${sim_dir}/METEOGRAM_* >/dev/null 2>&1 && file_op ${sim_dir}/METEOGRAM_* ${simout_dir}/out/icon
 
-  # Restart: only from a run that ended cleanly. A restart directory left by an
-  # earlier run of the same chunk is kept as a backup, not overwritten.
+  # Restart: only from a run that ended cleanly.
   if [[ "${sim_status}" == "ok" ]]; then
-    if [ -e "${simrst_dir}/icon" ]; then
-      mv ${simrst_dir}/icon ${simrst_dir}/icon_bku$(date '+%Y%m%d%H%M%S')
-    fi
-    mkdir -p ${simout_dir}/rst/icon ${simrst_dir}/icon
-    # archive strategy (pkp006): the restart stays with its simulation (output, logs,
-    # namelists) in simout; the restart directory holds only a symbolic link to it,
-    # which the next chunk follows (sim_config.sh)
+    # archive strategy (pkp006): the restart stays with its simulation (output, logs, namelists) in
+    # simout, and the next chunk reads it from there -- expid.conf sets simrstm1_dir to
+    # <simout of the previous chunk>/rst (performance_plan.md 18.1).
+    mkdir -p ${simout_dir}/rst/icon
     bulk_op ${sim_dir}/${expid}_restart_ATMO_*.nc  ${simout_dir}/rst/icon
-    ln -sv  ${simout_dir}/rst/icon/${expid}_restart_ATMO_*.nc  ${simrst_dir}/icon/
+    # The link directory dta/restart/<chunk>/icon is no longer used. To bring it back, drop
+    # simrstm1_dir from expid.conf and uncomment the three lines below.
+    # if [ -e "${simrst_dir}/icon" ]; then
+    #   mv ${simrst_dir}/icon ${simrst_dir}/icon_bku$(date '+%Y%m%d%H%M%S')
+    # fi
+    # mkdir -p ${simrst_dir}/icon
+    # ln -sv ${simout_dir}/rst/icon/${expid}_restart_ATMO_*.nc ${simrst_dir}/icon/
   fi
 
   # copy binary
