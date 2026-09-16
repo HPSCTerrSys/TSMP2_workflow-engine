@@ -2,9 +2,10 @@
 #
 # function to configure tsmp2 post-processing cleanup
 #
-# ICON: checks the post files of every processed month (tools/post_check.sh). If all is well the
-# temporary directory is removed; otherwise it is kept with the logs. The model output in
-# dta/simres is never touched here.
+# ICON: checks the post files of every processed month (tools/post_check.sh). The per-variable logs,
+# the variable list, the job info and the job logs are stored with the post files in
+# <pos_out>/<YYYY_MM>/log/. If all is well the temporary directory is removed; otherwise it is kept
+# as well. The model output in dta/simres is never touched here.
 
 pos_cleanup(){
 
@@ -39,9 +40,30 @@ done
 
 if [[ ${problems} -eq 0 ]]; then
   echo "Post-processing status: ok"
-  rm -r ${pos_tmp}
 else
   echo "Post-processing status: FAILED (${problems} problem(s)); temporary files and logs kept in ${pos_tmp}"
+fi
+
+# keep the evidence with the data: for every processed month the per-variable logs and return codes,
+# the variable list that produced the files, the job info and the job's own logs (as sim_cleanup does
+# for simres). Done after the status line so the copied job log contains it.
+local job_id=$(sched_job_id) job_name=$(sched_job_name)
+for month in ${pos_monthstr}; do
+  mkdir -p ${pos_out}/${month}/log
+  cp -p ${pos_tmp}/${month}/*.log ${pos_tmp}/${month}/*.rc ${pos_out}/${month}/log/ 2>/dev/null
+  cp -p ${pos_varlist} ${pos_out}/${month}/log/
+  case "${scheduler:-slurm}" in
+    pbs) qstat -f ${job_id} > ${pos_out}/${month}/log/job_info.log 2>&1
+         cp -p ${log_dir}/${job_name}.{e,o}${job_id} ${pos_out}/${month}/log/ 2>/dev/null ;;
+    local) echo "local job ${job_name} (id ${job_id}) on $(hostname) at $(date)" > ${pos_out}/${month}/log/job_info.log ;;
+    *)   scontrol show job ${job_id} > ${pos_out}/${month}/log/job_info.log 2>&1
+         cp -p ${log_dir}/${job_name}_${job_id}.{err,out} ${pos_out}/${month}/log/ 2>/dev/null ;;
+  esac
+done
+
+# the temporary directory is cleared only once its logs are stored with the data
+if [[ ${problems} -eq 0 ]]; then
+  rm -r ${pos_tmp}
 fi
 
 } # pos_cleanup
