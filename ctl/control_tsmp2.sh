@@ -130,6 +130,14 @@ dateymd=$(date -u -d "${startdate}" +%Y%m%d)
 dateshort=$(date -u -d "${startdate}" +%Y%m%d%H%M%S)
 
 # general control settings
+# Per-chunk names and run paths are derived below with ${var:-default}. Because "set -a" keeps them
+# exported, a value computed in the first iteration would survive into the next one, so with
+# numsimstep > 1 every chunk would reuse the first chunk's job name and run directory. Clear them
+# here, before the config is parsed, so the config can still override them and otherwise each chunk
+# derives its own from dateymd. (pkp006, 2026-09-20; the 2002-06..08 chain was the first multi-chunk
+# run here.)
+unset jobname_pre jobname_sim jobname_pos jobname_vis sim_dir pre_dir
+
 parse_config_file ${conf_file} "ctl_config_general"
 jobname_pre=${jobname_pre:-"${expid}_${caseid}pre_${dateymd}"}
 jobname_sim=${jobname_sim:-"${expid}_${caseid}sim_${dateymd}"}
