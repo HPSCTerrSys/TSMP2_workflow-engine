@@ -37,3 +37,9 @@
 [submodule "src/eCLM_atmforcing"]
 	path = src/eCLM_atmforcing
 	url = https://github.com/HPSCTerrSys/eCLM_static-file-generator.git
+[submodule "src/PDAF_input-file-generator"]
+	path = src/PDAF_input-file-generator
+	url = https://github.com/HPSCTerrSys/PDAF_input-file-generator.git
+[submodule "src/eCLM_namelist-generator"]
+	path = src/eCLM_namelist-generator
+	url = https://github.com/HPSCTerrSys/eCLM_namelist-generator.git

@@ -41,7 +41,44 @@ for yyyymm in "${listfrcfile[@]}"; do
 done
 unset yyyymm year month
 
-fi
+fi #eclm
+
+if [[ "${modelid}" == *pdaf* ]]; then
+if [[ "${modelid}" == *clm* ]]; then
+
+cd "${lsmforcpertsrc_dir}"
+
+# load environment
+source ${pre_config_pdaf_env}
+source ${pyvenv_pre_config_pdaf}/bin/activate
+
+# list contain dates needed for forcing
+for yyyymm in "${listfrcfile[@]}"; do
+   year="${yyyymm%%-*}"
+   month="${yyyymm#*-}"
+
+   (
+      exec srun --exclusive -n 1 python perturb_forcings.py \
+       --years "${year}" \
+       --months "${month}" \
+       --num-ensemble ${num_ensemble} \
+       --fdir ${eclmfrc_dir} \
+       --outdir ${pdaffrc_dir}
+   ) &
+
+   # cap concurrent jobs at npnode (cores/tasks per node)
+   while (( $(jobs -rp | wc -l) >= npnode )); do
+      wait -n
+   done
+
+done
+wait
+unset yyyymm year month
+deactivate
+
+
+fi #eclm 
+fi #pdaf
 
 } # pre_run
 
