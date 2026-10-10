@@ -119,6 +119,7 @@ if [[ "${modelid}" == *icon* ]]; then
   nblocks_c=${nblocks_c:-0}   # pkp007: 0 = off, as pkp006; ICON allows only one of nproma, nblocks_c, nblocks_e > 0
   nblocks_e=${nblocks_e:-0}
   nproma_sub=${nproma_sub:-0} # pkp007: 0 = ICON default (nblocks_sub = 1), as pkp006
+  ecrad_isolver=${ecrad_isolver:-0} # pkp007: 0 = McICA, ICON default (pkp006, CPU); the GPU build needs 2 (McICA-ACC)
   icon_numioprocs=${icon_numioprocs:-1}
   icon_numrstprocs=${icon_numrstprocs:-0}
   icon_numprefetchproc=${icon_numprefetchproc:-1}
@@ -206,6 +207,7 @@ if [[ "${modelid}" == *icon* ]]; then
   sed -i "s/__nblocks_c__/${nblocks_c}/" NAMELIST_icon
   sed -i "s/__nblocks_e__/${nblocks_e}/" NAMELIST_icon
   sed -i "s/__nproma_sub__/${nproma_sub}/" NAMELIST_icon
+  sed -i "s/__ecrad_isolver__/${ecrad_isolver}/" NAMELIST_icon
 #  sed -i "s/\( num_io_procs   =\).*/\1 ${icon_numioprocs}/" NAMELIST_icon
   sed -i "s/__num_io_procs__/${icon_numioprocs}/" NAMELIST_icon
   sed -i "s/__num_restart_procs__/${icon_numrstprocs}/" NAMELIST_icon
