@@ -116,6 +116,9 @@ if [[ "${modelid}" == *icon* ]]; then
   icon_latbc_dir=${icon_latbc_dir:-${frc_dir}/icon/latbc/$(date -u -d "${startdate}" +%Y%m)}
   icon_restartdt=${icon_restartdt:-${simlensec}}
   nproma=${nproma:-12}
+  nblocks_c=${nblocks_c:-0}   # pkp007: 0 = off, as pkp006; ICON allows only one of nproma, nblocks_c, nblocks_e > 0
+  nblocks_e=${nblocks_e:-0}
+  nproma_sub=${nproma_sub:-0} # pkp007: 0 = ICON default (nblocks_sub = 1), as pkp006
   icon_numioprocs=${icon_numioprocs:-1}
   icon_numrstprocs=${icon_numrstprocs:-0}
   icon_numprefetchproc=${icon_numprefetchproc:-1}
@@ -200,6 +203,9 @@ if [[ "${modelid}" == *icon* ]]; then
   sed -i "s/__dtrestart__/${icon_restartdt}/" icon_master.namelist
   sed -i "s/\(lrestart            =\).*/\1 $lrestart/" icon_master.namelist
   sed -i "s/__nproma__/${nproma}/" NAMELIST_icon
+  sed -i "s/__nblocks_c__/${nblocks_c}/" NAMELIST_icon
+  sed -i "s/__nblocks_e__/${nblocks_e}/" NAMELIST_icon
+  sed -i "s/__nproma_sub__/${nproma_sub}/" NAMELIST_icon
 #  sed -i "s/\( num_io_procs   =\).*/\1 ${icon_numioprocs}/" NAMELIST_icon
   sed -i "s/__num_io_procs__/${icon_numioprocs}/" NAMELIST_icon
   sed -i "s/__num_restart_procs__/${icon_numrstprocs}/" NAMELIST_icon
