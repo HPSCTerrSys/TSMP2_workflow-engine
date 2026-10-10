@@ -119,6 +119,17 @@ if [[ "${modelid}" == *icon* ]]; then
   icon_numioprocs=${icon_numioprocs:-1}
   icon_numrstprocs=${icon_numrstprocs:-0}
   icon_numprefetchproc=${icon_numprefetchproc:-1}
+  # pkp007 (JUPITER GPU, 2026-10-10): the hostfile and mapping above reserve the last
+  # ico_node x (npnode - ico_gpus_per_node) ranks for CPU work, so ICON's I/O + restart + prefetch ranks
+  # must fill exactly those. A mismatch would not crash: compute ranks would share a GPU on CPU slots,
+  # or I/O ranks would leave GPUs idle.
+  if [[ -n "${ico_gpus_per_node}" ]]; then
+    ico_cpu_proc=$((ico_node*(npnode-ico_gpus_per_node)))
+    if (( icon_numioprocs + icon_numrstprocs + icon_numprefetchproc != ico_cpu_proc )); then
+      echo "ERROR: num_io_procs (${icon_numioprocs}) + num_restart_procs (${icon_numrstprocs}) + num_prefetch_proc (${icon_numprefetchproc}) must equal the CPU ranks, ico_node x (npnode - ico_gpus_per_node) = ${ico_cpu_proc}"
+      exit 1
+    fi
+  fi
   domainfile_icon=${domainfile_icon:-europe011_DOM01.nc}
   fname_iconghgforc=${fname_iconghgforc:-bc_greenhouse_rcp45_1765-2500.nc}
   fname_iconkinne=${fname_iconkinne:-aerosoldata/EURO_R13B05_aeropt_kinne}
