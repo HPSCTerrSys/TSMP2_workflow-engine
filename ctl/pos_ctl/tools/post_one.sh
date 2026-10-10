@@ -9,7 +9,8 @@
 #
 # Environment (set by pos_config.sh):
 #   pos_simres     directory holding the chunk result directories (dta/simres), searched as
-#                  icon_*/out/icon/ICON_out_<expid>_<stream>_<YYYYMMDD>...nc[_part_<n>+], *_bku* excluded
+#                  <caseid>icon_*/out/icon/ICON_out_<expid>_<stream>_<YYYYMMDD>...nc[_part_<n>+], *_bku* excluded
+#                  (caseid and modelid from pos_config.sh; pkp006, CASE_ID "": icon_*, as before)
 #                  (after a restart ICON logs "Modify filename ... _part_<n>+" for each stream's first
 #                  file, but 2026.04 keeps the plain name, F38; the pattern accepts both)
 #   pos_out        post-processing directory with icon_grid.nc and remapnn_weights.nc
@@ -38,7 +39,7 @@ files=()
 while IFS= read -r f; do
   fdate=$(basename ${f} | sed -E "s/^ICON_out_${expid}_${stream}_([0-9]{8})T.*/\1/")
   if [[ ${fdate} -ge ${d0} && ${fdate} -le ${d1} ]]; then files+=("${f}"); fi
-done < <(ls -1 ${pos_simres}/icon_*/out/icon/ICON_out_${expid}_${stream}_[0-9]*T[0-9]*Z*.nc* 2>/dev/null \
+done < <(ls -1 ${pos_simres}/${caseid}${modelid}_*/out/icon/ICON_out_${expid}_${stream}_[0-9]*T[0-9]*Z*.nc* 2>/dev/null \
          | grep -v '_bku' | sort -t_ -k1,1 || true)
 if [[ ${#files[@]} -eq 0 ]]; then
   echo "ERROR post_one ${name}: no ICON_out_${expid}_${stream}_*.nc between ${d0} and ${d1} in ${pos_simres}" >&2

@@ -80,7 +80,7 @@ done
 mkdir -p ${pos_out} ${pos_tmp}
 
 if [[ ! -f ${pos_out}/icon_grid.nc || ! -f ${pos_out}/rotated_grid_bnds.nc ]]; then
-  pos_const=$(ls -1 ${pos_simres}/icon_*/out/icon/ICON_out_${expid}_const_*.nc 2>/dev/null | grep -v '_bku' | sort | head -n 1 || true)
+  pos_const=$(ls -1 ${pos_simres}/${caseid}${modelid}_*/out/icon/ICON_out_${expid}_const_*.nc 2>/dev/null | grep -v '_bku' | sort | head -n 1 || true)
   [[ -n ${pos_const} ]] || { echo "ERROR pos_config: no ICON constants file (ICON_out_${expid}_const_*.nc) in ${pos_simres}"; return 1; }
   bash ${pos_tools}/post_grid.sh ${pos_const} ${pos_target_grid} ${pos_out} || return 1
 fi
@@ -88,6 +88,6 @@ fi
 export pos_tools pos_varlist pos_simres pos_out pos_tmp pos_target_grid pos_spice_dir pos_correct_cf \
        pos_mapping_csv pos_ntasks pos_omp pos_partial pos_chunk_end pos_monthstr \
        pos_ga_title pos_ga_institution pos_ga_project_id pos_ga_realization pos_ga_contact \
-       pos_ga_icon_version pos_ga_references expid
+       pos_ga_icon_version pos_ga_references expid caseid modelid
 
 } # pos_config
