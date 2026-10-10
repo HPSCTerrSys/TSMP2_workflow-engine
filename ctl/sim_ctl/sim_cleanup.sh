@@ -172,6 +172,7 @@ if [[ "${modelid}" == *parflow* ]]; then
 fi # parflow
 
 file_op ${sim_dir}/${mpmd_mapping_file} ${simout_dir}/log/
+[ -n "${mpmd_hostfile}" ] && file_op ${sim_dir}/${mpmd_hostfile} ${simout_dir}/log/ # pkp007: GPU rank placement (sim_config.sh)
 
 # sim logs
 if [[ "${scheduler}" == "pbs" ]]; then

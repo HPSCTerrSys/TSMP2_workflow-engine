@@ -18,6 +18,14 @@ source $LOADENVS
 export OMP_NUM_THREADS=${omp_num_threads:-1}
 export MKL_NUM_THREADS=${OMP_NUM_THREADS}
 
+# pkp007 (JUPITER GPU, 2026-10-10): OpenACC runtime settings for the GPU build, as in JSC's JUWELS
+# Booster/JEDI and ETH's Saentis run scripts and ICON's run/create_target_header. srun passes them on
+# to every rank. NVCOMPILER_TERM=trace prints a stack trace if a rank aborts.
+if [[ -n "${ico_gpus_per_node}" ]]; then
+  export NVCOMPILER_ACC_DEFER_UPLOADS=1
+  export NVCOMPILER_TERM=trace
+fi
+
 if [[ "${modelid}" == *clm* ]]; then
 
 # Set PIO log files

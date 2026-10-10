@@ -44,8 +44,40 @@ else
    # nodes - but a run beyond 64 nodes would need a plain srun with a SLURM_LOCALID wrapper.
    mpmd_mapping_file=slm_multiprog_mapping.conf
    mpmd_run_cmd="srun --multi-prog"
+   # pkp007 (JUPITER GPU, 2026-10-10): mixed GPU/CPU rank placement, on only if ico_gpus_per_node is set.
+   # ICON's I/O, restart and prefetch ranks are the last ranks (mo_mpi.f90), so the hostfile lists
+   # every node ico_gpus_per_node times (compute ranks, one GPU each), then every node
+   # npnode - ico_gpus_per_node times (CPU ranks). Block distribution would put all CPU ranks on the
+   # last nodes, and plane=4 is reported to crash (ETH). Binding is per rank in the mapping file (B3).
+   if [[ -n "${ico_gpus_per_node}" ]]; then
+      mpmd_hostfile=slm_hostfile
+      if [[ -n "${SLURM_JOB_NODELIST}" ]]; then
+         ico_hosts=$(scontrol show hostnames "${SLURM_JOB_NODELIST}")
+      else # debugmode dry run: no allocation yet, placeholder names show the layout
+         ico_hosts=$(seq -f "__node%g__" 1 ${ico_node})
+      fi
+      for host in ${ico_hosts}; do printf "${host}\n%.0s" $(seq 1 ${ico_gpus_per_node}); done \
+         > ${sim_dir}/${mpmd_hostfile}
+      for host in ${ico_hosts}; do printf "${host}\n%.0s" $(seq 1 $((npnode-ico_gpus_per_node))); done \
+         >> ${sim_dir}/${mpmd_hostfile}
+      mpmd_run_cmd="env SLURM_HOSTFILE=${mpmd_hostfile} srun --cpu-bind=none --distribution=arbitrary --multi-prog"
+   fi
    if [[ "${modelid}" == *icon* ]]; then
-      echo "0-__icon_pe__   ./icon" >> ${sim_dir}/${mpmd_mapping_file}
+      if [[ -n "${ico_gpus_per_node}" ]]; then
+         # pkp007 (JUPITER GPU, 2026-10-10): one line per rank. ICON selects no device itself
+         # (setAccDevice is never called), so CUDA_VISIBLE_DEVICES gives each rank its GPU. Compute rank r
+         # is on hostfile line r+1, so its local index, GPU and NUMA domain is r mod ico_gpus_per_node
+         # (JUPITER: GPU g <-> NUMA g <-> cores 72g..72g+71; binding as in ICON's santis_gpu.sh, GH200).
+         # CPU ranks (I/O, restart, prefetch; the last ranks) go to the last NUMA domain and see its GPU,
+         # in case the OpenACC runtime touches a device on them.
+         ico_gpu_proc=$((ico_node*ico_gpus_per_node))
+         for ((r=0; r<ico_proc; r++)); do
+            if (( r < ico_gpu_proc )); then g=$((r % ico_gpus_per_node)); else g=$((ico_gpus_per_node-1)); fi
+            echo "${r} env CUDA_VISIBLE_DEVICES=${g} numactl --cpunodebind=${g} --membind=${g} ./icon"
+         done >> ${sim_dir}/${mpmd_mapping_file}
+      else
+         echo "0-__icon_pe__   ./icon" >> ${sim_dir}/${mpmd_mapping_file}
+      fi
    fi
    if [[ "${modelid}" == *eclm* ]]; then
       echo "__clm_ps__-__clm_pe__ ./eclm" >> ${sim_dir}/${mpmd_mapping_file}
