@@ -122,6 +122,7 @@ if [[ "${modelid}" == *icon* ]]; then
   ecrad_isolver=${ecrad_isolver:-0} # pkp007: 0 = McICA, ICON default (pkp006, CPU); the GPU build needs 2 (McICA-ACC)
   lcuda_graph_turb_tran=${lcuda_graph_turb_tran:-.false.} # pkp007: CUDA graph in the turbulent transfer (GPU only); .false. = ICON default (pkp006)
   lcuda_graph_lnd=${lcuda_graph_lnd:-.false.}             # pkp007: CUDA graph in TERRA/sea ice/FLake (GPU only); .false. = ICON default (pkp006)
+  disable_print_gpu_mem=${disable_print_gpu_mem:-.false.} # pkp007: .true. drops ICON's per-step GPU memory print (production logging); .false. = ICON default (pkp006, J1, P-a, b08g, b16g)
   icon_numioprocs=${icon_numioprocs:-1}
   icon_numrstprocs=${icon_numrstprocs:-0}
   icon_numprefetchproc=${icon_numprefetchproc:-1}
@@ -212,6 +213,7 @@ if [[ "${modelid}" == *icon* ]]; then
   sed -i "s/__ecrad_isolver__/${ecrad_isolver}/" NAMELIST_icon
   sed -i "s/__lcuda_graph_turb_tran__/${lcuda_graph_turb_tran}/" NAMELIST_icon
   sed -i "s/__lcuda_graph_lnd__/${lcuda_graph_lnd}/" NAMELIST_icon
+  sed -i "s/__disable_print_gpu_mem__/${disable_print_gpu_mem}/" NAMELIST_icon
 #  sed -i "s/\( num_io_procs   =\).*/\1 ${icon_numioprocs}/" NAMELIST_icon
   sed -i "s/__num_io_procs__/${icon_numioprocs}/" NAMELIST_icon
   sed -i "s/__num_restart_procs__/${icon_numrstprocs}/" NAMELIST_icon
