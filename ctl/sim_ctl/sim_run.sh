@@ -24,6 +24,12 @@ export MKL_NUM_THREADS=${OMP_NUM_THREADS}
 if [[ -n "${ico_gpus_per_node}" ]]; then
   export NVCOMPILER_ACC_DEFER_UPLOADS=1
   export NVCOMPILER_TERM=trace
+  # pkp007 P-b (2026-10-11): needed by the OpenACC runtime when ICON captures CUDA graphs (lcuda_graph_turb_tran,
+  # lcuda_graph_lnd; ICON's run_wrapper_levante_gpu.tmpl). Set only when a graph switch is on, so runs without graphs
+  # keep the environment they were benchmarked with (J1, P-a).
+  if [[ "${lcuda_graph_turb_tran,,}${lcuda_graph_lnd,,}" == *true* ]]; then
+    export NVCOMPILER_ACC_USE_GRAPH=1
+  fi
 fi
 
 if [[ "${modelid}" == *clm* ]]; then
