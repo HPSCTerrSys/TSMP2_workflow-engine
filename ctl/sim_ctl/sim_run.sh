@@ -30,6 +30,12 @@ if [[ -n "${ico_gpus_per_node}" ]]; then
   if [[ "${lcuda_graph_turb_tran,,}${lcuda_graph_lnd,,}" == *true* ]]; then
     export NVCOMPILER_ACC_USE_GRAPH=1
   fi
+  # pkp007 x0105 diagnostics (2026-10-12): every OpenACC kernel and transfer runs synchronously, so a GPU error
+  # (x0105ng: CUDA_ERROR_ILLEGAL_ADDRESS reported at the !$ACC WAIT in o3_pl2ml) is raised by the kernel that
+  # causes it. Slower; diagnostics only. Off unless acc_synchronous=true in expid.conf [sim_config_icon].
+  if [[ "${acc_synchronous,,}" == true ]]; then
+    export NVCOMPILER_ACC_SYNCHRONOUS=1
+  fi
 fi
 
 if [[ "${modelid}" == *clm* ]]; then
