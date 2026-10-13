@@ -171,6 +171,12 @@ if [[ "${modelid}" == *parflow* ]]; then
 
 fi # parflow
 
+# pkp007 (2026-10-13): provenance (sim_config, sim_run). The engine configuration goes with the namelists; the engine
+# version and the runtime environment go with the logs. Files that are absent (a run directory from before this
+# change) are skipped.
+for f in master.conf expid.conf; do [ -e ${sim_dir}/$f ] && file_op ${sim_dir}/$f ${simout_dir}/nml/; done
+for f in wfe_version.log run_env.log; do [ -e ${sim_dir}/$f ] && file_op ${sim_dir}/$f ${simout_dir}/log/; done
+
 file_op ${sim_dir}/${mpmd_mapping_file} ${simout_dir}/log/
 [ -n "${mpmd_hostfile}" ] && file_op ${sim_dir}/${mpmd_hostfile} ${simout_dir}/log/ # pkp007: GPU rank placement (sim_config.sh)
 

@@ -38,6 +38,14 @@ if [[ -n "${ico_gpus_per_node}" ]]; then
   fi
 fi
 
+# pkp007 (2026-10-13): provenance. The runtime environment the model starts with (OpenACC, threads, UCX, CUDA, MPI
+# tuning) and the loaded modules; sim_cleanup copies run_env.log to simres/<case>_<date>/log.
+{ echo "# environment at model start, $(date '+%Y-%m-%dT%H:%M:%S'), job ${SLURM_JOB_ID:-n/a}"
+  env | grep -E '^(NVCOMPILER_|OMP_|MKL_|UCX_|CUDA_|OMPI_MCA_|PMIX_MCA_)' | sort
+  echo "# modules"
+  module list 2>&1 || echo "(module command not available)"
+} > run_env.log
+
 if [[ "${modelid}" == *clm* ]]; then
 
 # Set PIO log files

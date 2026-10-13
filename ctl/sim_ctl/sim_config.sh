@@ -23,6 +23,17 @@ if [ -e "${sim_dir}" ]; then
 fi
 mkdir -p $sim_dir
 
+# pkp007 (2026-10-13): provenance. The engine configuration and the engine version, kept with the run; sim_cleanup
+# copies them to simres/<case>_<date>/nml (configuration) and log (version). expid.conf is the file this job parses
+# now; master.conf was parsed at submission (its values reach the job through the environment), so this copy matches
+# it as long as master.conf is not edited while the job is queued.
+cp ${ctl_dir}/${MASTER_CONF##*/} ${conf_file} ${sim_dir}/
+{ echo "wfe_commit:  $(git -C ${ctl_dir} rev-parse HEAD 2>/dev/null || echo unknown)"
+  echo "wfe_branch:  $(git -C ${ctl_dir} rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+  echo "uncommitted changes in ctl/ at job start:"
+  git -C ${ctl_dir} status --short -- . 2>/dev/null || echo "  (git not available)"
+} > ${sim_dir}/wfe_version.log
+
 # MPMD program-rank mapping file and run command for the coupled run (format depend on scheduler)
 if [[ "${scheduler}" == "pbs" || "${scheduler}" == "local" ]]; then
    # Open MPI app-context file, ranks assigned per-line count (used with 'mpiexec --app')
