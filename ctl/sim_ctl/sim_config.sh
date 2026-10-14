@@ -174,10 +174,13 @@ if [[ "${modelid}" == *icon* ]]; then
     icon_dtime_chunk=${icon_dtime_spinup}
   fi
   # physics call intervals keep fixed ratios to the time step, as in CEI195c
-  icon_dt_conv=$(( 2 * icon_dtime_chunk ))
-  icon_dt_rad=$(( ${icon_dt_rad_fac:-4} * icon_dtime_chunk )) # pkp007 (2026-10-14): factor from expid.conf icon_dt_rad_fac (PG KICS Q11: 6 x proposed); default 4 = pkp006/p007 production
-  icon_dt_sso=$(( 4 * icon_dtime_chunk ))
-  icon_dt_gwd=$(( 4 * icon_dtime_chunk ))
+  # pkp007 (2026-10-14): the factors can be set in expid.conf (icon_dt_conv_fac, icon_dt_rad_fac, icon_dt_ssogwd_fac;
+  # PG KICS Q11); unset = 2 / 4 / 4 = pkp006 and p007 production. dt_ccov is not set in the namelist and follows dt_conv
+  # (ICON default). ICON requires dt_rad to be a multiple of dt_conv (mo_atm_phy_nwp_config.f90, rule III).
+  icon_dt_conv=$(( ${icon_dt_conv_fac:-2} * icon_dtime_chunk ))
+  icon_dt_rad=$(( ${icon_dt_rad_fac:-4} * icon_dtime_chunk ))
+  icon_dt_sso=$(( ${icon_dt_ssogwd_fac:-4} * icon_dtime_chunk ))
+  icon_dt_gwd=$(( ${icon_dt_ssogwd_fac:-4} * icon_dtime_chunk ))
   icon_initmode=${icon_initmode:-7}
   fname_dwdFG=${fname_dwdFG:-dwdFG_R13B05_DOM01.nc}
   fname_ifs2icon=${fname_ifs2icon:-ifs2icon_R13B05_DOM01.nc}
