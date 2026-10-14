@@ -175,7 +175,7 @@ if [[ "${modelid}" == *icon* ]]; then
   fi
   # physics call intervals keep fixed ratios to the time step, as in CEI195c
   icon_dt_conv=$(( 2 * icon_dtime_chunk ))
-  icon_dt_rad=$(( 4 * icon_dtime_chunk ))
+  icon_dt_rad=$(( ${icon_dt_rad_fac:-4} * icon_dtime_chunk )) # pkp007 (2026-10-14): factor from expid.conf icon_dt_rad_fac (PG KICS Q11: 6 x proposed); default 4 = pkp006/p007 production
   icon_dt_sso=$(( 4 * icon_dtime_chunk ))
   icon_dt_gwd=$(( 4 * icon_dtime_chunk ))
   icon_initmode=${icon_initmode:-7}
@@ -217,6 +217,11 @@ if [[ "${modelid}" == *icon* ]]; then
   sed -i "s/__simend__/$(date -u -d "${datep1}" +%Y-%m-%dT%H:%M:%SZ)/" icon_master.namelist
   sed -i "s/__dtrestart__/${icon_restartdt}/" icon_master.namelist
   sed -i "s/\(lrestart            =\).*/\1 $lrestart/" icon_master.namelist
+  # pkp007 (2026-10-14): optional override of the common namelist's checkpoint interval (P05D) from expid.conf
+  # icon_checkpoint_intval; P01M = restartTimeIntval means no intermediate checkpoints. Unset = the common value.
+  if [ -n "${icon_checkpoint_intval:-}" ]; then
+    sed -i "s/\(checkpointTimeIntval =\).*/\1 \"${icon_checkpoint_intval}\"/" icon_master.namelist
+  fi
   sed -i "s/__nproma__/${nproma}/" NAMELIST_icon
   sed -i "s/__nblocks_c__/${nblocks_c}/" NAMELIST_icon
   sed -i "s/__nblocks_e__/${nblocks_e}/" NAMELIST_icon
