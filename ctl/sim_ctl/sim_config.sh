@@ -256,6 +256,12 @@ if [[ "${modelid}" == *icon* ]]; then
   sed -i "s#__radgridfile_icon__#${fname_iconradgrid}#" NAMELIST_icon
   sed -i "s#__latbcgridfile_icon__#${fname_iconlatbcgrid}#" NAMELIST_icon
   sed -i "s/__dtime__/${icon_dtime_chunk}/" NAMELIST_icon
+  # pkp007 (2026-10-16): optional number of dynamics substeps from expid.conf icon_ndyn_substeps, added to
+  # &nonhydrostatic_nml (the common namelist does not set it; unset = ICON's default 5 = pkp006 and p007 so far).
+  # ICON's guideline dtime_max ~ 1.8 * ndyn_substeps * dx[km]: 25 s is 92 % of it with 5 at R13B07, 76 % with 6.
+  if [ -n "${icon_ndyn_substeps:-}" ]; then
+    sed -i "/^&nonhydrostatic_nml/a\  ndyn_substeps                = ${icon_ndyn_substeps}  ! pkp007: WFE setting (expid.conf icon_ndyn_substeps)" NAMELIST_icon
+  fi
   sed -i "s/__dt_conv__/${icon_dt_conv}/" NAMELIST_icon
   sed -i "s/__dt_rad__/${icon_dt_rad}/" NAMELIST_icon
   sed -i "s/__dt_sso__/${icon_dt_sso}/" NAMELIST_icon
