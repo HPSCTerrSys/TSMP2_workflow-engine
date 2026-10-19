@@ -262,6 +262,17 @@ if [[ "${modelid}" == *icon* ]]; then
   if [ -n "${icon_ndyn_substeps:-}" ]; then
     sed -i "/^&nonhydrostatic_nml/a\  ndyn_substeps                = ${icon_ndyn_substeps}  ! pkp007: WFE setting (expid.conf icon_ndyn_substeps)" NAMELIST_icon
   fi
+  # pkp007 (2026-10-19): optional horizontal-CFL control of ICON's adaptive substepping, from expid.conf.
+  # icon_nlev_hcfl: number of levels from the top whose horizontal CFL (at dt_dyn) is monitored and used to
+  # raise ndyn_substeps (ICON default 0 = off; ICON's docs: "the upper 10-15 levels"; its NWP set-ups use 10).
+  # icon_cfl_monitoring_freq: check interval in steps (ICON default 5; 1 = every step).
+  # Unset = ICON's defaults (pkp006, p007 up to 2002-11).
+  if [ -n "${icon_nlev_hcfl:-}" ]; then
+    sed -i "/^&nonhydrostatic_nml/a\  nlev_hcfl                    = ${icon_nlev_hcfl}  ! pkp007: WFE setting (expid.conf icon_nlev_hcfl)" NAMELIST_icon
+  fi
+  if [ -n "${icon_cfl_monitoring_freq:-}" ]; then
+    sed -i "/^&nonhydrostatic_nml/a\  cfl_monitoring_freq          = ${icon_cfl_monitoring_freq}  ! pkp007: WFE setting (expid.conf icon_cfl_monitoring_freq)" NAMELIST_icon
+  fi
   sed -i "s/__dt_conv__/${icon_dt_conv}/" NAMELIST_icon
   sed -i "s/__dt_rad__/${icon_dt_rad}/" NAMELIST_icon
   sed -i "s/__dt_sso__/${icon_dt_sso}/" NAMELIST_icon
