@@ -43,6 +43,9 @@ modelid=$(echo ${MODEL_ID//"-"/} | tr '[:upper:]' '[:lower:]')
 if [ -n "${CASE_ID}" ]; then caseid+=${CASE_ID,,}"_"; fi
 expid=${EXP_ID,,}
 
+# ParFlow on GPUs is selected via MODEL_ID, e.g. ICON-eCLM-ParFlowGPU
+if [[ "${modelid}" == *parflowgpu* ]]; then pfl_gpu=true; else pfl_gpu=false; fi
+
 # set path (not run-dir)
 nml_dir=$(realpath ${ctl_dir}/../nml/)
 geo_dir=$(realpath ${ctl_dir}/../dta/geo/)
@@ -73,6 +76,24 @@ echo "No npnode for machine '$SYSTEMNAME'. Please set npnode manually in master.
 fi
 if [ -z "$partition" ] && [ "${scheduler:-slurm}" != "local" ]; then
 echo "No partition/queue for machine '$SYSTEMNAME'. Please set partition manually in master.conf. Valid machine defaults for juwels/jurecadc/jusuf/jupiter."
+fi
+fi
+
+# GPU machine defaults for ParFlow, if not set by user
+if [ "${pfl_gpu}" == "true" ]; then
+if [ "${SYSTEMNAME}" == "juwels" ] || [ "${SYSTEMNAME}" == "jupiter" ]; then
+check_var_def pfl_gpu_partition booster "Taking user setting and GPU partition "
+check_var_def pfl_gpus_per_node 4 "Taking user setting for pfl_gpus_per_node "
+elif [ "${SYSTEMNAME}" == "jurecadc" ]; then
+check_var_def pfl_gpu_partition dc-gpu "Taking user setting and GPU partition "
+check_var_def pfl_gpus_per_node 4 "Taking user setting for pfl_gpus_per_node "
+elif [ "${SYSTEMNAME}" == "jusuf" ]; then
+check_var_def pfl_gpu_partition gpus "Taking user setting and GPU partition "
+check_var_def pfl_gpus_per_node 4 "Taking user setting for pfl_gpus_per_node "
+else
+if [ -z "$pfl_gpu_partition" ] || [ -z "$pfl_gpus_per_node" ]; then
+echo "No GPU defaults for machine '$SYSTEMNAME'. Please set pfl_gpu_partition and pfl_gpus_per_node manually in master.conf."
+fi
 fi
 fi
 account_def=${BUDGET_ACCOUNTS:-slts}
@@ -196,8 +217,12 @@ else
 fi # lpre
 
 #
-jobsimstring="${jobgenstring} $(sched_step_opts "${jobname_sim}" "${sim_wallclock}" "${tot_node}" "${tot_proc}") \
-              $(sched_dependency_opt "${dependencystring}")"
+if [[ "${pfl_gpu}" == "true" && "${scheduler}" != "local" && "${modelid}" == *parflow* ]]; then
+  jobsimstring="$(sched_het_opts "${jobname_sim}" "${sim_wallclock}" "$(sched_dependency_opt "${dependencystring}")")"
+else
+  jobsimstring="${jobgenstring} $(sched_step_opts "${jobname_sim}" "${sim_wallclock}" "${tot_node}" "${tot_proc}") \
+                $(sched_dependency_opt "${dependencystring}")"
+fi
 
 if (! ${debugmode}) ; then
   # Submit to sim.job

@@ -37,6 +37,19 @@ if [[ "${scheduler}" == "pbs" || "${scheduler}" == "local" ]]; then
    if [[ "${modelid}" == *parflow* ]]; then
       echo "-np ${pfl_proc} ./parflow __pfl_expid__" >> ${sim_dir}/${mpmd_mapping_file}
    fi
+elif [[ "${pfl_gpu}" == "true" && "${modelid}" == *parflow* ]]; then
+   # ParFlow on own GPU nodes: heterogeneous job, one het-group per component, no mapping file
+   mpmd_mapping_file=""
+   mpmd_run_cmd="srun"
+   hetgrp=0
+   for comp in icon eclm parflow; do
+      [[ "${modelid}" != *${comp}* ]] && continue
+      [[ ${hetgrp} -gt 0 ]] && mpmd_run_cmd+=" :"
+      mpmd_run_cmd+=" --het-group=${hetgrp} ./${comp}"
+      [[ "${comp}" == "parflow" ]] && mpmd_run_cmd+=" ${EXP_ID}"
+      hetgrp=$((hetgrp+1))
+   done
+   unset hetgrp comp
 else
    # Slurm multi-prog rank-range mapping file (used with 'srun --multi-prog')
    mpmd_mapping_file=slm_multiprog_mapping.conf
@@ -309,7 +322,7 @@ if [[ "${modelid}" == *parflow* ]]; then
   sed -i "s#__inifile__#$(basename "$fini_pfl")#" coup_oas.tcl
   sed -i "s/__pfltsfilerst__/${pfltsfilerst}/" coup_oas.tcl
   sed -i "s/__pfloutmfilt__/${pfloutmfilt}/" coup_oas.tcl
-  sed -i "s/__pfl_expid__/$EXP_ID/" ${mpmd_mapping_file}
+  [[ -n "${mpmd_mapping_file}" ]] && sed -i "s/__pfl_expid__/$EXP_ID/" ${mpmd_mapping_file}
 
   # --- execute ParFlow distributeing tcl-scripts
   export PARFLOW_DIR=${tsmp2_install_dir}
@@ -355,7 +368,10 @@ if ${debugmode}; then
 
 # create job submission script (tsmp2.job)
 echo "#!/usr/bin/env bash" > tsmp2.job
-echo "$(sched_directive_prefix) ${jobsimstring//[$'\t\r\n']}" >> tsmp2.job
+jobsimdirectives="${jobsimstring//[$'\t\r\n']}"
+# heterogeneous slurm job: ' : ' component separator becomes a hetjob directive
+jobsimdirectives="${jobsimdirectives// : /$'\n'$(sched_directive_prefix) hetjob$'\n'$(sched_directive_prefix) }"
+echo "$(sched_directive_prefix) ${jobsimdirectives}" >> tsmp2.job
 
 # add modelid and MPMD run settings, which are needed
 echo "" >> tsmp2.job
