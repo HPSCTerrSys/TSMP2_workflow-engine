@@ -43,7 +43,8 @@ modelid=$(echo ${MODEL_ID//"-"/} | tr '[:upper:]' '[:lower:]')
 if [ -n "${CASE_ID}" ]; then caseid+=${CASE_ID,,}"_"; fi
 expid=${EXP_ID,,}
 
-# ParFlow on GPUs is selected via MODEL_ID, e.g. ICON-eCLM-ParFlowGPU
+# GPU components are selected via MODEL_ID, e.g. ICONGPU-eCLM-ParFlowGPU
+if [[ "${modelid}" == *icongpu* ]]; then ico_gpu=true; else ico_gpu=false; fi
 if [[ "${modelid}" == *parflowgpu* ]]; then pfl_gpu=true; else pfl_gpu=false; fi
 
 # set path (not run-dir)
@@ -79,22 +80,28 @@ echo "No partition/queue for machine '$SYSTEMNAME'. Please set partition manuall
 fi
 fi
 
-# GPU machine defaults for ParFlow, if not set by user
-if [ "${pfl_gpu}" == "true" ]; then
-if [ "${SYSTEMNAME}" == "juwels" ] || [ "${SYSTEMNAME}" == "jupiter" ]; then
-check_var_def pfl_gpu_partition booster "Taking user setting and GPU partition "
-check_var_def pfl_gpus_per_node 4 "Taking user setting for pfl_gpus_per_node "
-elif [ "${SYSTEMNAME}" == "jurecadc" ]; then
-check_var_def pfl_gpu_partition dc-gpu "Taking user setting and GPU partition "
-check_var_def pfl_gpus_per_node 4 "Taking user setting for pfl_gpus_per_node "
-elif [ "${SYSTEMNAME}" == "jusuf" ]; then
-check_var_def pfl_gpu_partition gpus "Taking user setting and GPU partition "
-check_var_def pfl_gpus_per_node 4 "Taking user setting for pfl_gpus_per_node "
-else
-if [ -z "$pfl_gpu_partition" ] || [ -z "$pfl_gpus_per_node" ]; then
-echo "No GPU defaults for machine '$SYSTEMNAME'. Please set pfl_gpu_partition and pfl_gpus_per_node manually in master.conf."
-fi
-fi
+# GPU machine defaults (ICON, ParFlow), if not set by user
+if [ "${ico_gpu}" == "true" ] || [ "${pfl_gpu}" == "true" ]; then
+case "${SYSTEMNAME}" in
+  juwels|jupiter) gpu_part_def=booster; gpu_n_def=4 ;;
+  jurecadc)       gpu_part_def=dc-gpu;  gpu_n_def=4 ;;
+  jusuf)          gpu_part_def=gpus;    gpu_n_def=4 ;;
+  *)              gpu_part_def="";      gpu_n_def="" ;;
+esac
+for gpu_comp in ico pfl; do
+  [ "${gpu_comp}" == "ico" ] && [ "${ico_gpu}" != "true" ] && continue
+  [ "${gpu_comp}" == "pfl" ] && [ "${pfl_gpu}" != "true" ] && continue
+  if [ -n "${gpu_part_def}" ]; then
+    check_var_def ${gpu_comp}_gpu_partition ${gpu_part_def} "Taking user setting and ${gpu_comp} GPU partition "
+    check_var_def ${gpu_comp}_gpus_per_node ${gpu_n_def} "Taking user setting for ${gpu_comp}_gpus_per_node "
+  else
+    gpu_part_var=${gpu_comp}_gpu_partition; gpu_n_var=${gpu_comp}_gpus_per_node
+    if [ -z "${!gpu_part_var}" ] || [ -z "${!gpu_n_var}" ]; then
+      echo "No GPU defaults for machine '$SYSTEMNAME'. Please set ${gpu_part_var} and ${gpu_n_var} manually in master.conf."
+    fi
+  fi
+done
+unset gpu_part_def gpu_n_def gpu_comp gpu_part_var gpu_n_var
 fi
 account_def=${BUDGET_ACCOUNTS:-slts}
 check_var_def account ${account_def} "WARNING: No account is set. Using account="
@@ -217,7 +224,7 @@ else
 fi # lpre
 
 #
-if [[ "${pfl_gpu}" == "true" && "${scheduler}" != "local" && "${modelid}" == *parflow* ]]; then
+if [[ ( "${ico_gpu}" == "true" || "${pfl_gpu}" == "true" ) && "${scheduler}" != "local" ]]; then
   jobsimstring="$(sched_het_opts "${jobname_sim}" "${sim_wallclock}" "$(sched_dependency_opt "${dependencystring}")")"
 else
   jobsimstring="${jobgenstring} $(sched_step_opts "${jobname_sim}" "${sim_wallclock}" "${tot_node}" "${tot_proc}") \

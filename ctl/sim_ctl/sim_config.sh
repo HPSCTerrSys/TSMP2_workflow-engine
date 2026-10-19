@@ -37,8 +37,8 @@ if [[ "${scheduler}" == "pbs" || "${scheduler}" == "local" ]]; then
    if [[ "${modelid}" == *parflow* ]]; then
       echo "-np ${pfl_proc} ./parflow __pfl_expid__" >> ${sim_dir}/${mpmd_mapping_file}
    fi
-elif [[ "${pfl_gpu}" == "true" && "${modelid}" == *parflow* ]]; then
-   # ParFlow on own GPU nodes: heterogeneous job, one het-group per component, no mapping file
+elif [[ "${ico_gpu}" == "true" || "${pfl_gpu}" == "true" ]]; then
+   # ICON/ParFlow on own GPU nodes: heterogeneous job, one het-group per component, no mapping file
    mpmd_mapping_file=""
    mpmd_run_cmd="srun"
    hetgrp=0

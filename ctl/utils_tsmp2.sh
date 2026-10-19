@@ -25,6 +25,9 @@ sim_calc_numberofproc(){
 
 # calculate needed variables TODO: take LC_NUMERIC into account
 ico_proc=$( printf %.0f $(echo "$ico_node * $npnode" | bc -l))
+if [[ "${ico_gpu}" == "true" && "${scheduler:-slurm}" != "local" ]]; then
+   ico_proc=$( printf %.0f $(echo "$ico_node * $ico_gpus_per_node" | bc -l)) # one rank per GPU
+fi
 clm_proc=$( printf %.0f $(echo "$clm_node * $npnode" | bc -l))
 pfl_proc_tmp=$( printf %.0f $(echo "$pfl_node * $npnode" | bc -l))
 if [[ "${pfl_gpu}" == "true" && "${scheduler:-slurm}" != "local" ]]; then
@@ -68,6 +71,7 @@ check_run_oasis() {
 
   model_id=$(echo ${MODEL_ID} | tr '[:upper:]' '[:lower:]')
   model_id=${model_id//parflowgpu/parflow}
+  model_id=${model_id//icongpu/icon}
 
   # Split the identifier into individual elements
   IFS='-' read -r -a elements <<< "$model_id"
@@ -185,30 +189,37 @@ sched_step_opts() {
   esac
 } # sched_step_opts
 
-# heterogeneous submission options: ICON/eCLM on CPU nodes, ParFlow on its own GPU nodes
-# slurm: one component per model, separated by ' : ' (sbatch command-line syntax;
+# heterogeneous submission options: one block per component; ICON/ParFlow on their own
+# GPU nodes if selected via MODEL_ID (ICONGPU/ParFlowGPU), otherwise on CPU nodes
+# slurm: blocks separated by ' : ' (sbatch command-line syntax;
 #        sim_config.sh turns the separator into '#SBATCH hetjob' for tsmp2.job)
 # args: jobname walltime dependency_opt
 sched_het_opts() {
   local jobname="$1" walltime="$2" dep="$3"
+  local comp node_var gpu_var gpun_var gpupart_var blk
+  local chunks="" first=true opts=""
 
   case "${scheduler:-slurm}" in
     pbs)
-      local chunks=""
-      [[ "${ico_node}" != "0" ]] && chunks+="${ico_node}:ppn=${npnode}+"
-      [[ "${clm_node}" != "0" ]] && chunks+="${clm_node}:ppn=${npnode}+"
-      chunks+="${pfl_node}:ppn=${pfl_gpus_per_node}:gpus=${pfl_gpus_per_node}"
+      for comp in ico clm pfl; do
+        node_var="${comp}_node"; gpu_var="${comp}_gpu"; gpun_var="${comp}_gpus_per_node"
+        [[ "${!node_var}" == "0" ]] && continue
+        [[ -n "${chunks}" ]] && chunks+="+"
+        if [[ "${!gpu_var}" == "true" ]]; then
+          chunks+="${!node_var}:ppn=${!gpun_var}:gpus=${!gpun_var}"
+        else
+          chunks+="${!node_var}:ppn=${npnode}"
+        fi
+      done
       echo "${jobgenstring} -N ${jobname} -l walltime=${walltime} -l nodes=${chunks} -o ${log_dir}/ -e ${log_dir}/ ${dep}"
       ;;
     *)
-      local first=true opts="" blk
       local gen="${jobgenstring//--partition=${partition}/}"
-      local comp
       for comp in ico clm pfl; do
-        local node_var="${comp}_node"
+        node_var="${comp}_node"; gpu_var="${comp}_gpu"; gpun_var="${comp}_gpus_per_node"; gpupart_var="${comp}_gpu_partition"
         [[ "${!node_var}" == "0" ]] && continue
-        if [[ "${comp}" == "pfl" ]]; then
-          blk="-N ${pfl_node} --ntasks-per-node=${pfl_gpus_per_node} --gres=gpu:${pfl_gpus_per_node} -p ${pfl_gpu_partition}"
+        if [[ "${!gpu_var}" == "true" ]]; then
+          blk="-N ${!node_var} --ntasks-per-node=${!gpun_var} --gres=gpu:${!gpun_var} -p ${!gpupart_var}"
         else
           blk="-N ${!node_var} --ntasks-per-node=${npnode} -p ${partition}"
         fi
