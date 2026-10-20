@@ -45,9 +45,11 @@ if [[ "${modelid}" == *icon* ]] && ! grep -qsE "OK|RESTART" ${sim_dir}/finish.st
 fi
 echo "Simulation status: ${sim_status} (model exit code: ${sim_rc:-not recorded})"
 if [[ "${sim_status}" == "failed" ]]; then
-  file_op_mode=copy      # keep the run directory complete for debugging
-  bulk_file_op_mode=copy # likewise for the large files
-  sim_exit=1             # sim.job exits non-zero, so the next chunk does not start
+  file_op_mode=copy      # keep the run directory complete for debugging (logs, namelists, job files)
+  # pkp007 (2026-10-20): the large files (model output, checkpoints) are moved for a failed run too, as for a
+  # good one: same file system, so a rename; copying them left ~265 GB of output per failed December run twice
+  # (run/ and dta/simres/<case>_failed_<job>), and they are not needed for debugging. Was: bulk_file_op_mode=copy
+  sim_exit=1            # sim.job exits non-zero, so the next chunk does not start
 fi
 
 simout_dir=${out_dir}/${caseid}${modelid}_${dateymd}
@@ -113,6 +115,15 @@ if [[ "${modelid}" == *icon* ]]; then
     # fi
     # mkdir -p ${simrst_dir}/icon
     # ln -sv ${simout_dir}/rst/icon/${expid}_restart_ATMO_*.nc ${simrst_dir}/icon/
+  else
+    # pkp007 (2026-10-20): a failed run keeps its intermediate checkpoints (P05D) in its own
+    # <simout>_failed_<job>/rst/icon, so a rerun can start from the last one (as on 2002-03-26 and 2002-12-21,
+    # where the user had to copy them out of the run directory by hand). Check the size of the newest one
+    # before use: a crash during a checkpoint write can leave it incomplete.
+    if ls ${sim_dir}/${expid}_restart_ATMO_*.nc >/dev/null 2>&1; then
+      mkdir -p ${simout_dir}/rst/icon
+      bulk_op ${sim_dir}/${expid}_restart_ATMO_*.nc ${simout_dir}/rst/icon/
+    fi
   fi
 
   # copy binary
