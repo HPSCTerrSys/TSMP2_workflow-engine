@@ -273,6 +273,13 @@ if [[ "${modelid}" == *icon* ]]; then
   if [ -n "${icon_cfl_monitoring_freq:-}" ]; then
     sed -i "/^&nonhydrostatic_nml/a\  cfl_monitoring_freq          = ${icon_cfl_monitoring_freq}  ! pkp007: WFE setting (expid.conf icon_cfl_monitoring_freq)" NAMELIST_icon
   fi
+  # pkp007 (2026-10-20): optional msg_level from expid.conf icon_msg_level, replacing the template's value (0, as the
+  # common namelist for production; the template's "no engine machinery" note is superseded on the user's request).
+  # 7: once per time step the domain-wide max |vn| and |w| with their model levels ("MAXABS VN, W"), and a
+  # "Time step:" stamp every step -- an early-warning trace of the top-level blow-ups. Unset = the template's value.
+  if [ -n "${icon_msg_level:-}" ]; then
+    sed -i "s/^\(  msg_level  *= *\)[0-9][0-9]*/\1${icon_msg_level}  ! pkp007: WFE setting (expid.conf icon_msg_level)/" NAMELIST_icon
+  fi
   sed -i "s/__dt_conv__/${icon_dt_conv}/" NAMELIST_icon
   sed -i "s/__dt_rad__/${icon_dt_rad}/" NAMELIST_icon
   sed -i "s/__dt_sso__/${icon_dt_sso}/" NAMELIST_icon
