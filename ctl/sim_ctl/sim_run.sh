@@ -46,6 +46,17 @@ fi
   module list 2>&1 || echo "(module command not available)"
 } > run_env.log
 
+# pkp007 (2026-10-20): GPU state per node at job start (driver, clocks, power cap, temperature, uncorrected ECC
+# errors, clock-event/throttle reasons), to match slow or failed runs with nodes (2425992 and 2426353 ran ~7x slow
+# on 16 different nodes). One short job step on all nodes, limited to 2 min; a failure here never stops the model.
+if [[ -n "${ico_gpus_per_node}" && -n "${SLURM_JOB_ID:-}" ]]; then
+  { echo "# GPU state per node (nvidia-smi), $(date '+%Y-%m-%dT%H:%M:%S')"
+    timeout 120 srun --nodes=${SLURM_NNODES} --ntasks-per-node=1 --cpu-bind=none bash -c \
+      'nvidia-smi --query-gpu=index,name,driver_version,pci.bus_id,clocks.sm,clocks.max.sm,power.limit,temperature.gpu,ecc.errors.uncorrected.volatile.total,clocks_event_reasons.active --format=csv,noheader | sed "s/^/$(hostname -s), /"' 2>&1 \
+      || echo "(nvidia-smi step failed or timed out)"
+  } >> run_env.log
+fi
+
 if [[ "${modelid}" == *clm* ]]; then
 
 # Set PIO log files
