@@ -295,7 +295,10 @@ if [[ "${modelid}" == *icon* ]]; then
   ln -sf ${geo_dir_icon}/${fname_iconkinne}_sw_b14_fin_${icon_kinne_bgyear}.nc bc_aeropt_kinne_sw_b14_fin.nc
   ln -sf ${geo_dir_icon}/${fname_iconsplumes} MACv2.0-SP_v1.nc
   ln -sf ${geo_dir_icon}/${fname_iconsolar} bc_solar_irradiance_sw_b14.nc
-  for yr in $(seq $(date -u -d "${startdate} -1 month" +%Y) $(date -u -d "${datep1}" +%Y)); do
+  # pkp007 (2026-10-20): up to the year of the month after the chunk end, since ICON interpolates the monthly
+  # volcanic aerosol (and ozone) towards the next month; a chunk ending in late December needs next year's file
+  # (x1221sy, 12-21 -> 12-27, stopped at init without bc_aeropt_volc_..._2003.nc). Was: ... $(date -u -d "${datep1}" +%Y)
+  for yr in $(seq $(date -u -d "${startdate} -1 month" +%Y) $(date -u -d "${datep1} +1 month" +%Y)); do
     ln -sf ${geo_dir_icon}/${fname_iconvolc}_${yr}.nc bc_aeropt_cmip6_volc_lw_b16_sw_b14_${yr}.nc
     # ICON 2026.04 reads the volcanic aerosol as bc_aeropt_volc_lw_b16_sw_b14_<yr>.nc (mo_bc_aeropt_volc.f90)
     ln -sf ${geo_dir_icon}/${fname_iconvolc}_${yr}.nc bc_aeropt_volc_lw_b16_sw_b14_${yr}.nc
