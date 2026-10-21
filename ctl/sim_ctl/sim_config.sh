@@ -41,15 +41,24 @@ elif [[ "${ico_gpu}" == "true" || "${pfl_gpu}" == "true" ]]; then
    # ICON/ParFlow on own GPU nodes: heterogeneous job, one het-group per component, no mapping file
    mpmd_mapping_file=""
    mpmd_run_cmd="srun"
+   ncomp=0
+   for comp in icon eclm parflow; do
+      [[ "${modelid}" == *${comp}* ]] && ncomp=$((ncomp+1))
+   done
    hetgrp=0
    for comp in icon eclm parflow; do
       [[ "${modelid}" != *${comp}* ]] && continue
       [[ ${hetgrp} -gt 0 ]] && mpmd_run_cmd+=" :"
-      mpmd_run_cmd+=" --het-group=${hetgrp} ./${comp}"
+      # standalone component: plain srun, no het-group
+      if [[ ${ncomp} -gt 1 ]]; then
+         mpmd_run_cmd+=" --het-group=${hetgrp} ./${comp}"
+      else
+         mpmd_run_cmd+=" ./${comp}"
+      fi
       [[ "${comp}" == "parflow" ]] && mpmd_run_cmd+=" ${EXP_ID}"
       hetgrp=$((hetgrp+1))
    done
-   unset hetgrp comp
+   unset hetgrp comp ncomp
 else
    # Slurm multi-prog rank-range mapping file (used with 'srun --multi-prog')
    mpmd_mapping_file=slm_multiprog_mapping.conf
@@ -309,6 +318,10 @@ if [[ "${modelid}" == *parflow* ]]; then
   [[ "$lreal" == "true" ]] && sed -i "s/__nprocy_pfl_bldsva__/$pfl_procY/" ascii2pfb_slopes.tcl
   [[ "$lreal" == "true" ]] && sed -i "s/__nprocx_pfl_bldsva__/$pfl_procX/" ascii2pfb_SoilInd.tcl
   [[ "$lreal" == "true" ]] && sed -i "s/__nprocy_pfl_bldsva__/$pfl_procY/" ascii2pfb_SoilInd.tcl
+  if [[ "${pfl_gpu}" == "true" ]]; then
+    # ParFlow GPU: use the MGSemi preconditioner instead of the commented-out PFMG
+    sed -i -E 's/^[[:space:]]*#[[:space:]]*pfset[[:space:]]+Solver\.Linear\.Preconditioner[[:space:]]+PFMG.*$/pfset Solver.Linear.Preconditioner\t\t\t MGSemi\npfset Solver.Linear.Preconditioner.MGSemi.MaxIter\t 1\npfset Solver.Linear.Preconditioner.MGSemi.MaxLevels\t 10/' coup_oas.tcl
+  fi
   sed -i "s/__nprocx_pfl_bldsva__/$pfl_procX/" coup_oas.tcl
   sed -i "s/__nprocy_pfl_bldsva__/$pfl_procY/" coup_oas.tcl
   sed -i "s/__ngpflx_bldsva__/$pfl_ngx/" coup_oas.tcl
