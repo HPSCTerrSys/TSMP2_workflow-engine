@@ -280,6 +280,11 @@ if [[ "${modelid}" == *icon* ]]; then
   if [ -n "${icon_msg_level:-}" ]; then
     sed -i "s/^\(  msg_level  *= *\)[0-9][0-9]*/\1${icon_msg_level}  ! pkp007: WFE setting (expid.conf icon_msg_level)/" NAMELIST_icon
   fi
+  # pkp007 (2026-10-21): optional rayleigh_coeff from expid.conf icon_rayleigh_coeff, replacing the template's value
+  # (4.91, CEI195c's, ~100 x ICON's default 0.05; PG KICS Q15). Unset = the template's value.
+  if [ -n "${icon_rayleigh_coeff:-}" ]; then
+    sed -i "s/^\(  rayleigh_coeff  *= *\)[0-9.][0-9.]*/\1${icon_rayleigh_coeff}  ! pkp007: WFE setting (expid.conf icon_rayleigh_coeff)/" NAMELIST_icon
+  fi
   sed -i "s/__dt_conv__/${icon_dt_conv}/" NAMELIST_icon
   sed -i "s/__dt_rad__/${icon_dt_rad}/" NAMELIST_icon
   sed -i "s/__dt_sso__/${icon_dt_sso}/" NAMELIST_icon
