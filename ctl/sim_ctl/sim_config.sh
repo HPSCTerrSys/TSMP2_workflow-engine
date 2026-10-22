@@ -256,22 +256,38 @@ if [[ "${modelid}" == *icon* ]]; then
   sed -i "s#__radgridfile_icon__#${fname_iconradgrid}#" NAMELIST_icon
   sed -i "s#__latbcgridfile_icon__#${fname_iconlatbcgrid}#" NAMELIST_icon
   sed -i "s/__dtime__/${icon_dtime_chunk}/" NAMELIST_icon
-  # pkp007 (2026-10-16): optional number of dynamics substeps from expid.conf icon_ndyn_substeps, added to
-  # &nonhydrostatic_nml (the common namelist does not set it; unset = ICON's default 5 = pkp006 and p007 so far).
-  # ICON's guideline dtime_max ~ 1.8 * ndyn_substeps * dx[km]: 25 s is 92 % of it with 5 at R13B07, 76 % with 6.
+  # pkp007 (2026-10-16): optional number of dynamics substeps from expid.conf icon_ndyn_substeps in
+  # &nonhydrostatic_nml. ICON's guideline dtime_max ~ 1.8 * ndyn_substeps * dx[km]: 25 s is 92 % of it with 5 at
+  # R13B07, 76 % with 6. On a restart ICON takes the value stored in the restart file (ndyn_substeps_DOM01) instead.
+  # pkp007 (2026-10-22): the template on the PG KICS branch kgo-pkp007-gpu carries ndyn_substeps, nlev_hcfl and
+  # cfl_monitoring_freq itself (the baseline set of x0301b1), so these three hooks replace the template's line when
+  # it has one, and add the line otherwise (kgo-pkp006-namelists: not set, ICON's defaults). Appending a second
+  # line would be silently overridden by the template's, which comes later in the group. Unset = the template's value.
   if [ -n "${icon_ndyn_substeps:-}" ]; then
-    sed -i "/^&nonhydrostatic_nml/a\  ndyn_substeps                = ${icon_ndyn_substeps}  ! pkp007: WFE setting (expid.conf icon_ndyn_substeps)" NAMELIST_icon
+    if grep -q "^  ndyn_substeps  *=" NAMELIST_icon; then
+      sed -i "s/^\(  ndyn_substeps  *= *\)[0-9][0-9]*/\1${icon_ndyn_substeps}  ! pkp007: WFE setting (expid.conf icon_ndyn_substeps)/" NAMELIST_icon
+    else
+      sed -i "/^&nonhydrostatic_nml/a\  ndyn_substeps                = ${icon_ndyn_substeps}  ! pkp007: WFE setting (expid.conf icon_ndyn_substeps)" NAMELIST_icon
+    fi
   fi
   # pkp007 (2026-10-19): optional horizontal-CFL control of ICON's adaptive substepping, from expid.conf.
   # icon_nlev_hcfl: number of levels from the top whose horizontal CFL (at dt_dyn) is monitored and used to
   # raise ndyn_substeps (ICON default 0 = off; ICON's docs: "the upper 10-15 levels"; its NWP set-ups use 10).
   # icon_cfl_monitoring_freq: check interval in steps (ICON default 5; 1 = every step).
-  # Unset = ICON's defaults (pkp006, p007 up to 2002-11).
+  # Unset = the template's value (kgo-pkp007-gpu: 15 and 1; kgo-pkp006-namelists: ICON's defaults).
   if [ -n "${icon_nlev_hcfl:-}" ]; then
-    sed -i "/^&nonhydrostatic_nml/a\  nlev_hcfl                    = ${icon_nlev_hcfl}  ! pkp007: WFE setting (expid.conf icon_nlev_hcfl)" NAMELIST_icon
+    if grep -q "^  nlev_hcfl  *=" NAMELIST_icon; then
+      sed -i "s/^\(  nlev_hcfl  *= *\)[0-9][0-9]*/\1${icon_nlev_hcfl}  ! pkp007: WFE setting (expid.conf icon_nlev_hcfl)/" NAMELIST_icon
+    else
+      sed -i "/^&nonhydrostatic_nml/a\  nlev_hcfl                    = ${icon_nlev_hcfl}  ! pkp007: WFE setting (expid.conf icon_nlev_hcfl)" NAMELIST_icon
+    fi
   fi
   if [ -n "${icon_cfl_monitoring_freq:-}" ]; then
-    sed -i "/^&nonhydrostatic_nml/a\  cfl_monitoring_freq          = ${icon_cfl_monitoring_freq}  ! pkp007: WFE setting (expid.conf icon_cfl_monitoring_freq)" NAMELIST_icon
+    if grep -q "^  cfl_monitoring_freq  *=" NAMELIST_icon; then
+      sed -i "s/^\(  cfl_monitoring_freq  *= *\)[0-9][0-9]*/\1${icon_cfl_monitoring_freq}  ! pkp007: WFE setting (expid.conf icon_cfl_monitoring_freq)/" NAMELIST_icon
+    else
+      sed -i "/^&nonhydrostatic_nml/a\  cfl_monitoring_freq          = ${icon_cfl_monitoring_freq}  ! pkp007: WFE setting (expid.conf icon_cfl_monitoring_freq)" NAMELIST_icon
+    fi
   fi
   # pkp007 (2026-10-20): optional msg_level from expid.conf icon_msg_level, replacing the template's value (0, as the
   # common namelist for production; the template's "no engine machinery" note is superseded on the user's request).
@@ -281,7 +297,8 @@ if [[ "${modelid}" == *icon* ]]; then
     sed -i "s/^\(  msg_level  *= *\)[0-9][0-9]*/\1${icon_msg_level}  ! pkp007: WFE setting (expid.conf icon_msg_level)/" NAMELIST_icon
   fi
   # pkp007 (2026-10-21): optional rayleigh_coeff from expid.conf icon_rayleigh_coeff, replacing the template's value
-  # (4.91, CEI195c's, ~100 x ICON's default 0.05; PG KICS Q15). Unset = the template's value.
+  # (kgo-pkp006-namelists: 4.91, CEI195c's, ~100 x ICON's default 0.05; kgo-pkp007-gpu since 2026-10-22: 1.0, the
+  # baseline set; PG KICS Q15). Unset = the template's value.
   if [ -n "${icon_rayleigh_coeff:-}" ]; then
     sed -i "s/^\(  rayleigh_coeff  *= *\)[0-9.][0-9.]*/\1${icon_rayleigh_coeff}  ! pkp007: WFE setting (expid.conf icon_rayleigh_coeff)/" NAMELIST_icon
   fi
